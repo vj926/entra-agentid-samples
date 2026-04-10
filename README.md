@@ -1,1 +1,1 @@
-# agent-id-lab
+# Entra Agent ID lab
