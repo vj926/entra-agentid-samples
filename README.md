@@ -1,1 +1,1 @@
-# Entra Agent ID lab
+# Entra Agent ID Samples
