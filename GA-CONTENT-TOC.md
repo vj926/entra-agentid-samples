@@ -4,9 +4,7 @@
 
 | Type | Where it lives |
 |---|---|
-| **Article** (concept, how-to) | learn.microsoft.com/en-us/entra/agent-id/ (reference section) |
 | **Sample** (runnable code + walkthrough README) | github.com/microsoft/entra-agentid-samples |
-| Articles link → GitHub samples. Sample READMEs link → learn.ms articles. |
 
 ---
 
@@ -97,16 +95,16 @@ microsoft/entra-agentid-samples/
 
 | # | Title | Owner |
 |---|---|---|
-| 1.1 | Entra Agent ID: Architecture and Patterns | Anton |
-| 1.2 | Prerequisites and Environment Setup | Gargi |
+| 1.1 | Entra Agent ID: Architecture and Patterns | Anton ([@astaykov](https://github.com/astaykov)) |
+| 1.2 | Prerequisites and Environment Setup | Gargi ([@Gargi-Sinha](https://github.com/Gargi-Sinha)) |
 
 ### Section 2 — Sidecar
 
 | # | Title | Owner |
 |---|---|---|
-| 2.1 | The Sidecar Design Pattern | Razi / Yoel |
-| 2.2 | End-to-End Token Flow: Agent to Weather API | Razi |
-| 2.3 | Run the Sidecar Locally — Developer Quickstart | Razi |
+| 2.1 | The Sidecar Design Pattern | Razi ([@razi-rais](https://github.com/razi-rais)) / Yoel ([@yoelhor](https://github.com/yoelhor)) |
+| 2.2 | End-to-End Token Flow: Agent to Weather API | Razi ([@razi-rais](https://github.com/razi-rais)) |
+| 2.3 | Run the Sidecar Locally — Developer Quickstart | Razi ([@razi-rais](https://github.com/razi-rais)) |
 
 ### Section 3 — Third-Party Agent Platforms
 
@@ -114,46 +112,28 @@ microsoft/entra-agentid-samples/
 
 | # | Title | Owner |
 |---|---|---|
-| 3.1 | AWS: Amazon Bedrock Agent with Entra Agent ID Sidecar | Razi |
-| 3.2 | GCP: Vertex AI (Gemini) Agent with Entra Agent ID Sidecar | Razi |
+| 3.1 | AWS: Amazon Bedrock Agent with Entra Agent ID Sidecar | Razi ([@razi-rais](https://github.com/razi-rais)) |
+| 3.2 | GCP: Vertex AI (Gemini) Agent with Entra Agent ID Sidecar | Razi ([@razi-rais](https://github.com/razi-rais)) |
 
 **Federation Pattern** (`federation/`)
 
 | # | Title | Owner |
 |---|---|---|
-| 3.3 | GCP: Workload Identity Federation with Entra Agent ID | Arturo |
-| 3.4 | *(Future) AWS: Identity Federation with Entra Agent ID* | — |
+| 3.3 | GCP: Workload Identity Federation with Entra Agent ID | Arturo ([@ArLucaID](https://github.com/ArLucaID)) |
+| 3.4 | *(Future) AWS: Identity Federation with Entra Agent ID* | Arturo ([@ArLucaID](https://github.com/ArLucaID)) |
 
 **Low-Code** (`n8n/`)
 
 | # | Title | Owner |
 |---|---|---|
-| 3.5 | N8N: Low-Code Agent with Entra Agent ID | Anton |
+| 3.5 | N8N: Low-Code Agent with Entra Agent ID | Anton ([@astaykov](https://github.com/astaykov)) |
 
 ### Section 4 — Deploy
 
 | # | Title | Owner |
 |---|---|---|
-| 4.1 | Deploy to Azure App Service | Razi |
-| 4.2 | Deploy to Azure Kubernetes Service with Workload Identity | Yoel |
-| 4.3 | *(Future) Deploy to AWS* | — |
-| 4.4 | *(Future) Deploy to GCP* | — |
-
----
-
-## Cross-Linking Model
-
-**learn.ms article → GitHub:**
-```
-> [!div class="nextstepaction"]
-> [Run the Amazon Bedrock sample](https://github.com/microsoft/entra-agentid-samples/tree/main/sidecar/aws)
-```
-
-**GitHub sample README → learn.ms:**
-```markdown
-📖 **Concept article**: [The Sidecar Design Pattern](https://learn.microsoft.com/en-us/entra/agent-id/reference/...)
-📖 **Official docs**: [What is Microsoft Entra Agent ID?](https://learn.microsoft.com/en-us/entra/agent-id/)
-```
+| 4.1 | Deploy to Azure App Service | Razi ([@razi-rais](https://github.com/razi-rais)) |
+| 4.2 | Deploy to Azure Kubernetes Service with Workload Identity | Yoel ([@yoelhor](https://github.com/yoelhor)) |
 
 ---
 
@@ -179,13 +159,13 @@ microsoft/entra-agentid-samples/
 |---|---|---|---|
 | `main` | — | Production — GA-ready only | — |
 | `dev` | — | Integration — all PRs target here | `main` |
-| `razi/repo-setup` | Razi | README, PREREQUISITES, scripts/, .github/, .devcontainer/ | `dev` |
-| `razi/sidecar` | Razi | `sidecar/` (dev, aws, gcp, weather-api) | `dev` |
-| `razi/deploy` | Razi | `deploy/azure/app-service/` | `dev` |
-| `yoel/deploy-aks` | Yoel | `deploy/azure/aks/` | `dev` |
-| `anton/n8n` | Anton | `n8n/` | `dev` |
-| `gargi/prerequisites` | Gargi | `PREREQUISITES.md` | `dev` |
-| `arturo/federation` | Arturo | `federation/gcp/` | `dev` |
+| `razi/repo-setup` | @razi-rais | README, PREREQUISITES, scripts/, .github/, .devcontainer/ | `dev` |
+| `razi/sidecar` | @razi-rais | `sidecar/` (dev, aws, gcp, weather-api) | `dev` |
+| `razi/deploy` | @razi-rais | `deploy/azure/app-service/` | `dev` |
+| `yoel/deploy-aks` | @yoelhor | `deploy/azure/aks/` | `dev` |
+| `anton/n8n` | @astaykov | `n8n/` | `dev` |
+| `gargi/prerequisites` | @Gargi-Sinha | `PREREQUISITES.md` | `dev` |
+| `arturo/federation` | @ArLucaID | `federation/gcp/` | `dev` |
 
 ### Flow
 
@@ -201,18 +181,17 @@ owner/feature → PR → dev → PR → main
 | Required approvals | 1 minimum |
 | Dismiss stale PR reviews on new pushes | ✅ Yes |
 | Require status checks to pass | ✅ Yes |
-| Restrict who can merge | `rbinrais`, `yoelhor`, `antongeorgiev`, `gargi-sinha`, `arturoloop` *(confirm handles)* |
+| Restrict who can merge | @rbinrais, @yoelhor, @astaykov, @Gargi-Sinha, @ArLucaID |
 | Allow force pushes | ❌ No |
 | Allow deletions | ❌ No |
 
 ---
 
-## Summary: 13 Deliverables
+## Summary
 
-| | Articles (learn.ms) | Samples (GitHub) |
-|---|---|---|
-| Section 1 | 1.1 | 1.2 (PREREQUISITES.md) |
-| Section 2 | 2.1, 2.2 | 2.3 (sidecar/dev/) |
-| Section 3 | 3.1, 3.2, 3.3, 3.5 | 3.1 (sidecar/aws/), 3.2 (sidecar/gcp/), 3.3 (federation/gcp/), 3.5 (n8n/) |
-| Section 4 | 4.1, 4.2 | 4.1 (deploy/azure/app-service/), 4.2 (deploy/azure/aks/) |
-| **Total** | **9 articles** | **8 samples** (+ README hub) |
+| Section | Samples (GitHub) |
+|---|---|
+| Section 1 | 1.1, 1.2 (PREREQUISITES.md) |
+| Section 2 | 2.1, 2.2, 2.3 (sidecar/dev/) |
+| Section 3 | 3.1 (sidecar/aws/), 3.2 (sidecar/gcp/), 3.3 (federation/gcp/), 3.4, 3.5 (n8n/) |
+| Section 4 | 4.1 (deploy/azure/app-service/), 4.2 (deploy/azure/aks/) |
