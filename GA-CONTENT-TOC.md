@@ -97,9 +97,8 @@ microsoft/entra-agentid-samples/
 
 | # | Title |
 |---|---|
-| 1.1 | What Is Microsoft Entra Agent ID? |
-| 1.2 | Architecture: Agent Identity Blueprints and Token Exchange |
-| 1.3 | Prerequisites and Environment Setup |
+| 1.1 | Entra Agent ID: Architecture and Patterns *(Anton)* |
+| 1.2 | Prerequisites and Environment Setup |
 
 ### Section 2 — Sidecar
 
@@ -212,7 +211,7 @@ owner/feature → PR → dev → PR → main
 
 | | Articles (learn.ms) | Samples (GitHub) |
 |---|---|---|
-| Section 1 | 1.1 *(exists)*, 1.2 | 1.3 (PREREQUISITES.md) |
+| Section 1 | 1.1 | 1.2 (PREREQUISITES.md) |
 | Section 2 | 2.1, 2.2 | 2.3 (sidecar/dev/) |
 | Section 3 | 3.1, 3.2, 3.3, 3.5 | 3.1 (sidecar/aws/), 3.2 (sidecar/gcp/), 3.3 (federation/gcp/), 3.5 (n8n/) |
 | Section 4 | 4.1, 4.2 | 4.1 (deploy/azure/app-service/), 4.2 (deploy/azure/aks/) |
