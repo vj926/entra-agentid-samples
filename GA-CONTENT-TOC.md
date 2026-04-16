@@ -5,7 +5,7 @@
 | Type | Where it lives |
 |---|---|
 | **Article** (concept, how-to) | learn.microsoft.com/en-us/entra/agent-id/ (reference section) |
-| **Sample** (runnable code + walkthrough README) | github.com/microsoft/entra-agent-id-samples |
+| **Sample** (runnable code + walkthrough README) | github.com/microsoft/entra-agentid-samples |
 | Articles link → GitHub samples. Sample READMEs link → learn.ms articles. |
 
 ---
@@ -13,7 +13,7 @@
 ## Repo Structure
 
 ```
-microsoft/entra-agent-id-samples/
+microsoft/entra-agentid-samples/
 │
 ├── README.md                              ← Navigation hub
 ├── PREREQUISITES.md                       ← Section 1.3
@@ -101,7 +101,7 @@ microsoft/entra-agent-id-samples/
 | 1.2 | Architecture: Agent Identity Blueprints and Token Exchange |
 | 1.3 | Prerequisites and Environment Setup |
 
-### Section 2 — Sidecar Pattern: Run the Sidecar Locally
+### Section 2 — Sidecar
 
 | # | Title |
 |---|---|
@@ -109,29 +109,36 @@ microsoft/entra-agent-id-samples/
 | 2.2 | End-to-End Token Flow: Agent to Weather API |
 | 2.3 | Run the Sidecar Locally — Developer Quickstart |
 
-### Section 3 — Cross-Cloud: Third-Party Agent Platforms
+### Section 3 — Third-Party Agent Platforms
+
+**Sidecar Pattern** (`sidecar/`)
 
 | # | Title |
 |---|---|
 | 3.1 | AWS: Amazon Bedrock Agent with Entra Agent ID Sidecar |
-| 3.2 | Google Cloud: Vertex AI (Gemini) Agent with Entra Agent ID Sidecar |
-| 3.3 | N8N: Low-Code Agent with Entra Agent ID |
+| 3.2 | GCP: Vertex AI (Gemini) Agent with Entra Agent ID Sidecar |
 
-### Section 4 — Cross-Cloud: Identity Federation
-
-| # | Title |
-|---|---|
-| 4.1 | GCP: Workload Identity Federation with Entra Agent ID |
-| 4.2 | *(Future) AWS: Identity Federation with Entra Agent ID* |
-
-### Section 5 — Deploy
+**Federation Pattern** (`federation/`)
 
 | # | Title |
 |---|---|
-| 5.1 | Deploy to Azure App Service |
-| 5.2 | Deploy to Azure Kubernetes Service with Workload Identity |
-| 5.3 | *(Future) Deploy to AWS* |
-| 5.4 | *(Future) Deploy to GCP* |
+| 3.3 | GCP: Workload Identity Federation with Entra Agent ID |
+| 3.4 | *(Future) AWS: Identity Federation with Entra Agent ID* |
+
+**Low-Code** (`n8n/`)
+
+| # | Title |
+|---|---|
+| 3.5 | N8N: Low-Code Agent with Entra Agent ID |
+
+### Section 4 — Deploy
+
+| # | Title |
+|---|---|
+| 4.1 | Deploy to Azure App Service |
+| 4.2 | Deploy to Azure Kubernetes Service with Workload Identity |
+| 4.3 | *(Future) Deploy to AWS* |
+| 4.4 | *(Future) Deploy to GCP* |
 
 ---
 
@@ -140,7 +147,7 @@ microsoft/entra-agent-id-samples/
 **learn.ms article → GitHub:**
 ```
 > [!div class="nextstepaction"]
-> [Run the Amazon Bedrock sample](https://github.com/microsoft/entra-agent-id-samples/tree/main/sidecar/aws)
+> [Run the Amazon Bedrock sample](https://github.com/microsoft/entra-agentid-samples/tree/main/sidecar/aws)
 ```
 
 **GitHub sample README → learn.ms:**
@@ -154,7 +161,7 @@ microsoft/entra-agent-id-samples/
 ## Migration Plan
 
 **Source:** `razi-rais/3P-Agent-ID-Demo` (read-only, code source only)
-**Target:** `microsoft/entra-agent-id-samples`
+**Target:** `microsoft/entra-agentid-samples`
 
 1. Copy `sidecar/` folder as-is (structure already matches)
 2. Copy `EntraAgentID-Functions.ps1` → `scripts/`
@@ -207,7 +214,6 @@ owner/feature → PR → dev → PR → main
 |---|---|---|
 | Section 1 | 1.1 *(exists)*, 1.2 | 1.3 (PREREQUISITES.md) |
 | Section 2 | 2.1, 2.2 | 2.3 (sidecar/dev/) |
-| Section 3 | 3.1, 3.2, 3.3 | 3.1 (sidecar/aws/), 3.2 (sidecar/gcp/), 3.3 (n8n/) |
-| Section 4 | 4.1 | 4.1 (federation/gcp/) |
-| Section 5 | 5.1, 5.2 | 5.1 (deploy/azure/app-service/), 5.2 (deploy/azure/aks/) |
-| **Total** | **8 articles** | **7 samples** (+ README hub) |
+| Section 3 | 3.1, 3.2, 3.3, 3.5 | 3.1 (sidecar/aws/), 3.2 (sidecar/gcp/), 3.3 (federation/gcp/), 3.5 (n8n/) |
+| Section 4 | 4.1, 4.2 | 4.1 (deploy/azure/app-service/), 4.2 (deploy/azure/aks/) |
+| **Total** | **9 articles** | **8 samples** (+ README hub) |
