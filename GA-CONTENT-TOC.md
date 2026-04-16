@@ -95,49 +95,49 @@ microsoft/entra-agentid-samples/
 
 ### Section 1 — Getting Started
 
-| # | Title |
-|---|---|
-| 1.1 | Entra Agent ID: Architecture and Patterns *(Anton)* |
-| 1.2 | Prerequisites and Environment Setup |
+| # | Title | Owner |
+|---|---|---|
+| 1.1 | Entra Agent ID: Architecture and Patterns | Anton |
+| 1.2 | Prerequisites and Environment Setup | Gargi |
 
 ### Section 2 — Sidecar
 
-| # | Title |
-|---|---|
-| 2.1 | The Sidecar Design Pattern |
-| 2.2 | End-to-End Token Flow: Agent to Weather API |
-| 2.3 | Run the Sidecar Locally — Developer Quickstart |
+| # | Title | Owner |
+|---|---|---|
+| 2.1 | The Sidecar Design Pattern | Razi / Yoel |
+| 2.2 | End-to-End Token Flow: Agent to Weather API | Razi |
+| 2.3 | Run the Sidecar Locally — Developer Quickstart | Razi |
 
 ### Section 3 — Third-Party Agent Platforms
 
 **Sidecar Pattern** (`sidecar/`)
 
-| # | Title |
-|---|---|
-| 3.1 | AWS: Amazon Bedrock Agent with Entra Agent ID Sidecar |
-| 3.2 | GCP: Vertex AI (Gemini) Agent with Entra Agent ID Sidecar |
+| # | Title | Owner |
+|---|---|---|
+| 3.1 | AWS: Amazon Bedrock Agent with Entra Agent ID Sidecar | Razi |
+| 3.2 | GCP: Vertex AI (Gemini) Agent with Entra Agent ID Sidecar | Razi |
 
 **Federation Pattern** (`federation/`)
 
-| # | Title |
-|---|---|
-| 3.3 | GCP: Workload Identity Federation with Entra Agent ID |
-| 3.4 | *(Future) AWS: Identity Federation with Entra Agent ID* |
+| # | Title | Owner |
+|---|---|---|
+| 3.3 | GCP: Workload Identity Federation with Entra Agent ID | Arturo |
+| 3.4 | *(Future) AWS: Identity Federation with Entra Agent ID* | — |
 
 **Low-Code** (`n8n/`)
 
-| # | Title |
-|---|---|
-| 3.5 | N8N: Low-Code Agent with Entra Agent ID |
+| # | Title | Owner |
+|---|---|---|
+| 3.5 | N8N: Low-Code Agent with Entra Agent ID | Anton |
 
 ### Section 4 — Deploy
 
-| # | Title |
-|---|---|
-| 4.1 | Deploy to Azure App Service |
-| 4.2 | Deploy to Azure Kubernetes Service with Workload Identity |
-| 4.3 | *(Future) Deploy to AWS* |
-| 4.4 | *(Future) Deploy to GCP* |
+| # | Title | Owner |
+|---|---|---|
+| 4.1 | Deploy to Azure App Service | Razi |
+| 4.2 | Deploy to Azure Kubernetes Service with Workload Identity | Yoel |
+| 4.3 | *(Future) Deploy to AWS* | — |
+| 4.4 | *(Future) Deploy to GCP* | — |
 
 ---
 
