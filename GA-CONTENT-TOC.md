@@ -1,0 +1,213 @@
+# Entra Agent ID – GA Content TOC (Final)
+
+## Content Location
+
+| Type | Where it lives |
+|---|---|
+| **Article** (concept, how-to) | learn.microsoft.com/en-us/entra/agent-id/ (reference section) |
+| **Sample** (runnable code + walkthrough README) | github.com/microsoft/entra-agent-id-samples |
+| Articles link → GitHub samples. Sample READMEs link → learn.ms articles. |
+
+---
+
+## Repo Structure
+
+```
+microsoft/entra-agent-id-samples/
+│
+├── README.md                              ← Navigation hub
+├── PREREQUISITES.md                       ← Section 1.3
+├── CONTRIBUTING.md | LICENSE.md | SECURITY.md | CODE_OF_CONDUCT.md
+├── .devcontainer/                         ← Codespaces support
+├── .github/
+│   ├── ISSUE_TEMPLATE/
+│   └── CODEOWNERS
+│
+├── scripts/
+│   └── EntraAgentID-Functions.ps1         ← Shared PowerShell tooling
+│
+├── sidecar/                               ← SIDECAR PATTERN (container-based)
+│   ├── README.md                          ← Sidecar pattern overview
+│   ├── .env.example                       ← Shared Entra config
+│   │
+│   ├── weather-api/                       ← SHARED — token-validated Weather API
+│   │   ├── app.py
+│   │   ├── Dockerfile
+│   │   ├── requirements.txt
+│   │   └── README.md
+│   │
+│   ├── dev/                               ← Local dev edition (Ollama)
+│   │   ├── app.py
+│   │   ├── Dockerfile
+│   │   ├── docker-compose.yml
+│   │   ├── requirements.txt
+│   │   ├── docs/
+│   │   └── README.md
+│   │
+│   ├── aws/                               ← Amazon Bedrock edition
+│   │   ├── app.py
+│   │   ├── Dockerfile
+│   │   ├── docker-compose.yml
+│   │   ├── requirements.txt
+│   │   ├── docs/
+│   │   └── README.md
+│   │
+│   └── gcp/                               ← Google Vertex AI edition
+│       ├── app.py
+│       ├── Dockerfile
+│       ├── docker-compose.yml
+│       ├── requirements.txt
+│       ├── docs/
+│       └── README.md
+│
+├── federation/                            ← FEDERATION PATTERN (token exchange via FIC)
+│   ├── README.md                          ← Federation pattern overview
+│   ├── gcp/                               ← GCP Workload Identity → Entra
+│   │   └── README.md
+│   └── aws/                               ← (Future) AWS STS → Entra
+│       └── README.md
+│
+├── n8n/                                   ← N8N — own integration pattern (no sidecar)
+│   ├── README.md
+│   └── ...                                ← TBD (Owner: Anton)
+│
+└── deploy/                                ← DEPLOYMENT samples
+    ├── azure/                             ← Azure deployments
+    │   ├── app-service/                   ← App Service + ACR
+    │   │   ├── README.md
+    │   │   ├── docker-compose.app-service.yml
+    │   │   ├── infra/app-service.bicep
+    │   │   └── deploy.sh
+    │   │
+    │   └── aks/                           ← AKS + Workload Identity
+    │       ├── README.md
+    │       ├── k8s/
+    │       ├── infra/aks.bicep
+    │       └── deploy.sh
+    │
+    ├── aws/                               ← (Future) AWS deployments
+    └── gcp/                               ← (Future) GCP deployments
+```
+
+---
+
+## Full TOC
+
+### Section 1 — Getting Started
+
+| # | Title |
+|---|---|
+| 1.1 | What Is Microsoft Entra Agent ID? |
+| 1.2 | Architecture: Agent Identity Blueprints and Token Exchange |
+| 1.3 | Prerequisites and Environment Setup |
+
+### Section 2 — Sidecar Pattern: Run the Sidecar Locally
+
+| # | Title |
+|---|---|
+| 2.1 | The Sidecar Design Pattern |
+| 2.2 | End-to-End Token Flow: Agent to Weather API |
+| 2.3 | Run the Sidecar Locally — Developer Quickstart |
+
+### Section 3 — Cross-Cloud: Third-Party Agent Platforms
+
+| # | Title |
+|---|---|
+| 3.1 | AWS: Amazon Bedrock Agent with Entra Agent ID Sidecar |
+| 3.2 | Google Cloud: Vertex AI (Gemini) Agent with Entra Agent ID Sidecar |
+| 3.3 | N8N: Low-Code Agent with Entra Agent ID |
+
+### Section 4 — Cross-Cloud: Identity Federation
+
+| # | Title |
+|---|---|
+| 4.1 | GCP: Workload Identity Federation with Entra Agent ID |
+| 4.2 | *(Future) AWS: Identity Federation with Entra Agent ID* |
+
+### Section 5 — Deploy
+
+| # | Title |
+|---|---|
+| 5.1 | Deploy to Azure App Service |
+| 5.2 | Deploy to Azure Kubernetes Service with Workload Identity |
+| 5.3 | *(Future) Deploy to AWS* |
+| 5.4 | *(Future) Deploy to GCP* |
+
+---
+
+## Cross-Linking Model
+
+**learn.ms article → GitHub:**
+```
+> [!div class="nextstepaction"]
+> [Run the Amazon Bedrock sample](https://github.com/microsoft/entra-agent-id-samples/tree/main/sidecar/aws)
+```
+
+**GitHub sample README → learn.ms:**
+```markdown
+📖 **Concept article**: [The Sidecar Design Pattern](https://learn.microsoft.com/en-us/entra/agent-id/reference/...)
+📖 **Official docs**: [What is Microsoft Entra Agent ID?](https://learn.microsoft.com/en-us/entra/agent-id/)
+```
+
+---
+
+## Migration Plan
+
+**Source:** `razi-rais/3P-Agent-ID-Demo` (read-only, code source only)
+**Target:** `microsoft/entra-agent-id-samples`
+
+1. Copy `sidecar/` folder as-is (structure already matches)
+2. Copy `EntraAgentID-Functions.ps1` → `scripts/`
+3. Polish READMEs with final titles
+4. Add `deploy/`, `.devcontainer/`, `.github/`
+5. Add root `README.md` navigation hub + `PREREQUISITES.md`
+6. Archive `razi-rais/3P-Agent-ID-Demo` with redirect notice
+
+---
+
+## Branch Strategy
+
+### Convention: `{owner}/{feature}`
+
+| Branch | Owner | What goes in | Merges Into |
+|---|---|---|---|
+| `main` | — | Production — GA-ready only | — |
+| `dev` | — | Integration — all PRs target here | `main` |
+| `razi/repo-setup` | Razi | README, PREREQUISITES, scripts/, .github/, .devcontainer/ | `dev` |
+| `razi/sidecar` | Razi | `sidecar/` (dev, aws, gcp, weather-api) | `dev` |
+| `razi/deploy` | Razi | `deploy/azure/app-service/` | `dev` |
+| `yoel/deploy-aks` | Yoel | `deploy/azure/aks/` | `dev` |
+| `anton/n8n` | Anton | `n8n/` | `dev` |
+| `gargi/prerequisites` | Gargi | `PREREQUISITES.md` | `dev` |
+| `arturo/federation` | Arturo | `federation/gcp/` | `dev` |
+
+### Flow
+
+```
+owner/feature → PR → dev → PR → main
+```
+
+### Branch Protection: `main`
+
+| Setting | Value |
+|---|---|
+| Require pull request before merging | ✅ Yes |
+| Required approvals | 1 minimum |
+| Dismiss stale PR reviews on new pushes | ✅ Yes |
+| Require status checks to pass | ✅ Yes |
+| Restrict who can merge | `rbinrais`, `yoelhor`, `antongeorgiev`, `gargi-sinha`, `arturoloop` *(confirm handles)* |
+| Allow force pushes | ❌ No |
+| Allow deletions | ❌ No |
+
+---
+
+## Summary: 13 Deliverables
+
+| | Articles (learn.ms) | Samples (GitHub) |
+|---|---|---|
+| Section 1 | 1.1 *(exists)*, 1.2 | 1.3 (PREREQUISITES.md) |
+| Section 2 | 2.1, 2.2 | 2.3 (sidecar/dev/) |
+| Section 3 | 3.1, 3.2, 3.3 | 3.1 (sidecar/aws/), 3.2 (sidecar/gcp/), 3.3 (n8n/) |
+| Section 4 | 4.1 | 4.1 (federation/gcp/) |
+| Section 5 | 5.1, 5.2 | 5.1 (deploy/azure/app-service/), 5.2 (deploy/azure/aks/) |
+| **Total** | **8 articles** | **7 samples** (+ README hub) |
