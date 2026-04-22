@@ -21,9 +21,9 @@ In this tutorial, you learn how to:
 > * Verify the autonomous and on-behalf-of (OBO) identity flows end to end.
 
 > [!TIP]
-> **Recommended approach: AI-assisted setup.** This tutorial has several moving parts — Entra role assignments, the Ollama model-pull strategy (runtime vs baked), ACR image builds, and post-deploy manual wiring. Running it end-to-end by hand is fully supported (every command is documented below), but the fastest and least error-prone path is to **pair an AI assistant with the skill packaged in this repo**: [`.claude/skills/deploy-agent-aca-dev/SKILL.md`](../../../.claude/skills/deploy-agent-aca-dev/SKILL.md).
+> **Recommended: AI-assisted deployment.** The fastest, least error-prone way to finish this tutorial is to pair an AI assistant with the skill packaged in this repo: [`.claude/skills/deploy-agent-aca-dev/SKILL.md`](../../../.claude/skills/deploy-agent-aca-dev/SKILL.md). The assistant confirms your SKU choices, picks the right Ollama model strategy, handles the post-deploy manual steps, and surfaces known failure modes in real time — typically cutting deployment time from hours to minutes. Running the tutorial end-to-end by hand is fully supported (every command is documented below); the skill just front-loads the decisions.
 >
-> The skill works with **Claude Code** (which reads `.claude/skills/` by default) and with **GitHub Copilot Chat** (ask it to read the `SKILL.md` file). The assistant confirms your SKU choices, picks the right Ollama model strategy, handles the post-deploy manual steps, and surfaces known failure modes in real time. If you prefer a manual run, continue reading — the tutorial remains the source of truth.
+> The skill works with **Claude Code** (which reads `.claude/skills/` by default) and with **GitHub Copilot Chat** (ask it to read the `SKILL.md` file). If you prefer a manual run, continue reading — the tutorial remains the source of truth.
 
 ## 1. Overview
 
@@ -177,7 +177,7 @@ Before provisioning anything, pick a SKU for each of the following. The table li
 > [!WARNING]
 > **`OLLAMA_IMAGE_STRATEGY=runtime-pull` on scale-to-zero.** Compounds: the first request after idle triggers an image pull AND a model download. User waits 30–60 s for the first answer. Don't combine.
 
-For the full decision matrix, see the skill reference: [`sku-sizing.md`](../../.github/skills/deploy-agent-aca-dev/references/sku-sizing.md).
+For the full decision matrix, see the skill reference: [`sku-sizing.md`](../../../.claude/skills/deploy-agent-aca-dev/references/sku-sizing.md).
 
 ## 3. Final object inventory
 
@@ -273,7 +273,7 @@ export CLIENT_SPA_APP_ID=$(grep '^CLIENT_SPA_APP_ID=' scripts/.env | cut -d= -f2
 ### 5.3 Configure the Blueprint for OBO
 
 ```powershell
-pwsh -NoProfile -File .github/skills/deploy-agent-aca-dev/scripts/setup-obo-blueprint-for-aca.ps1 `
+pwsh -NoProfile -File .claude/skills/deploy-agent-aca-dev/scripts/setup-obo-blueprint-for-aca.ps1 `
   -BlueprintAppId $env:BLUEPRINT_APP_ID `
   -ClientSpaAppId $env:CLIENT_SPA_APP_ID `
   -AgentAppId $env:AGENT_CLIENT_ID `
@@ -285,7 +285,7 @@ pwsh -NoProfile -File .github/skills/deploy-agent-aca-dev/scripts/setup-obo-blue
 OBO requires a **delegated** `User.Read` grant in addition to the application permissions `Start-EntraAgentIDWorkflow` already granted. Without this, users hit `AADSTS65001`.
 
 ```powershell
-pwsh -NoProfile -File .github/skills/deploy-agent-aca-dev/scripts/grant-agent-obo-consent.ps1 `
+pwsh -NoProfile -File .claude/skills/deploy-agent-aca-dev/scripts/grant-agent-obo-consent.ps1 `
   -AgentAppId $env:AGENT_CLIENT_ID -TenantId $env:TENANT_ID
 ```
 
@@ -513,7 +513,7 @@ Same two manual steps as the AWS variant — both are tenant-level Entra/Graph o
 ### 10.1 Add the app's FQDN to the Client SPA redirect URIs
 
 ```bash
-bash .github/skills/deploy-agent-aca-dev/scripts/add-spa-redirect-uri.sh
+bash .claude/skills/deploy-agent-aca-dev/scripts/add-spa-redirect-uri.sh
 ```
 
 This PATCHes `spa.redirectUris` on the Client SPA app directly via Graph. `az ad app update --web-redirect-uris` does **not** affect SPA redirect URIs.
@@ -584,7 +584,7 @@ There is no AWS or GCP rotation — because there is no AWS or GCP.
 | Ollama logs show `pulling manifest…` then 404 | Model name / tag wrong | Verify the exact name with `docker run --rm ollama/ollama:latest ollama pull <name>` locally |
 | First request hangs 30+ s | `runtime-pull` strategy cold start | Switch to the `baked` strategy |
 | `AADSTS65001` on browser OBO sign-in | Missing delegated `User.Read` admin consent | Run `grant-agent-obo-consent.ps1` (see [§5.4](#54-admin-consent-the-agents-delegated-graph-permission)) |
-| `AADSTS50011: redirect URI mismatch` | Production `https://<FQDN>` not in SPA redirect URIs | Run `add-spa-redirect-uri.sh` (see [§10.1](#101-add-the-apps-fqdn-to-the-client-spa-redirect-uris)) |
+| `AADSTS50011: redirect URI mismatch` | Deployed `https://<FQDN>` not in SPA redirect URIs | Run `add-spa-redirect-uri.sh` (see [§10.1](#101-add-the-apps-fqdn-to-the-client-spa-redirect-uris)) |
 | `AADSTS50079` on `az login` | New user has not completed MFA enrollment | Sign in once via browser to enroll, then retry |
 | Graph `$filter=appId eq` returns empty for Blueprint | Agent Identity Blueprint types invisible to `$filter` | Use key-lookup form `/beta/applications(appId='<id>')` — the scripts in this skill already do this |
 | <a name="133-request_badrequest-directoryaccessasuserall"></a>`REQUEST_BADREQUEST: Directory.AccessAsUser.All` on Blueprint PATCH | `az account get-access-token --resource graph` includes `Directory.AccessAsUser.All` which Blueprint rejects | Use pwsh `Connect-MgGraph -Scopes …` with narrow scopes (never `.default`) |
@@ -624,6 +624,60 @@ az containerapp logs show -g "$RG" -n "$APP_NAME" --container sidecar --tail 50
 | Per-token model cost | **$0** (Ollama local) |
 
 Switching to Dedicated-D4 for latency adds ~$140/mo and removes cold-start latency. Moving to a GPU profile for larger models adds ~$2k+/mo.
+
+## 15. Clean teardown
+
+> **TIP — AI-assisted teardown.** If you use Claude Code or GitHub Copilot, invoke the [`teardown-agent-aca-dev`](../../../.claude/skills/teardown-agent-aca-dev/SKILL.md) skill. It runs the same commands below with dry-run by default and prompts at each destructive step.
+>
+> ```bash
+> # Dry run (default — prints commands, deletes nothing)
+> bash .claude/skills/teardown-agent-aca-dev/scripts/teardown-aca-dev.sh
+>
+> # Azure only
+> DRY_RUN=0 bash .claude/skills/teardown-agent-aca-dev/scripts/teardown-aca-dev.sh
+>
+> # Full teardown (Azure + Entra apps)
+> DRY_RUN=0 DELETE_ENTRA=1 \
+>   bash .claude/skills/teardown-agent-aca-dev/scripts/teardown-aca-dev.sh
+> ```
+
+### 15.1 Order of operations
+
+1. **Revoke OAuth consent** on the Agent SP so a future redeploy starts from a clean state.
+2. **Delete the Azure resource group** — removes the Container App, ACA environment, ACR (with the baked Ollama image), Log Analytics workspace, and managed identity in one call.
+3. **Delete Entra objects** *(opt-in)* — Client SPA, Agent Identity, Blueprint. Blueprints are often shared — **re-confirm before deleting**.
+
+### 15.2 Manual commands
+
+```bash
+# 0. Load the deployment variables
+source /tmp/deploy-vars.sh
+
+# 1. Revoke OAuth consent on the Agent SP
+AGENT_SP_OID=$(az ad sp show --id "$AGENT_CLIENT_ID" --query id -o tsv)
+az rest --method GET \
+  --uri "https://graph.microsoft.com/v1.0/oauth2PermissionGrants?\$filter=clientId eq '$AGENT_SP_OID'" \
+  --query 'value[].id' -o tsv | while read -r g; do
+    az rest --method DELETE --uri "https://graph.microsoft.com/v1.0/oauth2PermissionGrants/$g"
+  done
+
+# 2. Azure — deletes Container App, ACA env, ACR, Log Analytics, MI in one call
+az group delete --name "$RG" --yes --no-wait
+
+# 3. Entra (opt-in)
+az ad app delete --id "$CLIENT_SPA_APP_ID"
+# Agent Identity — via Agent ID portal, or Graph:
+az rest --method DELETE --uri "https://graph.microsoft.com/beta/agentIdentities/$AGENT_CLIENT_ID"
+# Blueprint — re-confirm, this may be shared:
+az ad app delete --id "$BLUEPRINT_APP_ID"
+```
+
+### 15.3 Verify
+
+```bash
+az group exists --name "$RG"                              # expect: false
+az ad app show --id "$CLIENT_SPA_APP_ID" 2>&1 | head -1   # expect: not found (if Entra deleted)
+```
 
 ## Appendix A — Secretless migration from docker-compose
 

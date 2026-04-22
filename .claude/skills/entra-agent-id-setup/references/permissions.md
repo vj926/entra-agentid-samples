@@ -7,7 +7,7 @@ Per [Microsoft Learn — Agent 365 AI-guided setup](https://learn.microsoft.com/
 | Role | Template ID | Scope | Notes |
 |------|-------------|-------|-------|
 | Global Administrator | `62e90394-69f5-4237-9190-012177145e10` | All | Least-specific; highest privilege |
-| Agent ID Administrator | `db506228-d27e-4b7d-95e5-295956d6615f` | Agent ID-specific | **Recommended** for production setup. Full blueprint / agent / agentic-user lifecycle |
+| Agent ID Administrator | `db506228-d27e-4b7d-95e5-295956d6615f` | Agent ID-specific | **Recommended** for shared-tenant setup. Full blueprint / agent / agentic-user lifecycle |
 | Agent ID Developer | `adb2368d-a9be-41b5-8667-d96778e081b0` | Agent ID-specific | **Least-privileged that works — empirically verified 2026-04-21**. Per Learn: *"Create an agent blueprint and its service principal in a tenant. User will be added as an owner."* |
 
 ### Roles that DO NOT work

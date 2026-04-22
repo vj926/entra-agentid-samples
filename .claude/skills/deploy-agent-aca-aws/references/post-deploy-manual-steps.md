@@ -2,9 +2,9 @@
 
 Two steps cannot be completed before the Container App exists, and two steps cannot be done via `az ad app update`. Run them after Step 6 (deploy) in the main SKILL procedure.
 
-## 1. Add the production SPA redirect URI
+## 1. Add the deployed SPA redirect URI
 
-The Client SPA app was registered with only `http://localhost:3003`. The production `https://<APP_FQDN>` must be added, or the browser MSAL popup fails with `AADSTS50011`.
+The Client SPA app was registered with only `http://localhost:3003`. The deployed `https://<APP_FQDN>` must be added, or the browser MSAL popup fails with `AADSTS50011`.
 
 `az ad app update --web-redirect-uris` does NOT modify SPA URIs — you must PATCH Graph directly:
 

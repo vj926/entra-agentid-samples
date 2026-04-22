@@ -1,6 +1,6 @@
 ---
 title: "Tutorial: Deploy an AWS Bedrock agent with the Microsoft Entra Agent ID sidecar on Azure Container Apps"
-description: Deploy a production AWS Bedrock agent to Azure Container Apps. The agent authenticates to Microsoft Entra through the Agent ID sidecar and to AWS STS through workload identity federation, with no stored secrets.
+description: Deploy an AWS Bedrock agent to Azure Container Apps. The agent authenticates to Microsoft Entra through the Agent ID sidecar and to AWS STS through workload identity federation, with no stored secrets.
 ms.topic: tutorial
 ms.date: 04/22/2026
 ---
@@ -19,9 +19,9 @@ In this tutorial, you learn how to:
 > * Verify the autonomous and on-behalf-of (OBO) identity flows end to end.
 
 > [!TIP]
-> **Recommended approach: AI-assisted setup.** This tutorial has many prerequisites and moving parts — Entra role assignments, Bedrock model enablement, ACR image builds, the v1 token-exchange intermediary app, and post-deploy manual wiring. Running it end-to-end by hand is fully supported (every command is documented below), but the fastest and least error-prone path is to **pair an AI assistant with the skill packaged in this repo**: [`.claude/skills/deploy-agent-aca-aws/SKILL.md`](../../../.claude/skills/deploy-agent-aca-aws/SKILL.md).
+> **Recommended: AI-assisted deployment.** The fastest, least error-prone way to finish this tutorial is to pair an AI assistant with the skill packaged in this repo: [`.claude/skills/deploy-agent-aca-aws/SKILL.md`](../../../.claude/skills/deploy-agent-aca-aws/SKILL.md). The assistant confirms your SKU choices, wires the v1 token exchange, handles the post-deploy manual steps, and surfaces known failure modes in real time — typically cutting deployment time from hours to minutes. Running the tutorial end-to-end by hand is fully supported (every command is documented below); the skill just front-loads the decisions.
 >
-> The skill works with **Claude Code** (which reads `.claude/skills/` by default) and with **GitHub Copilot Chat** (ask it to read the `SKILL.md` file). The assistant confirms your SKU choices, wires the v1 token exchange, handles the post-deploy manual steps, and surfaces known failure modes in real time. If you prefer a manual run, continue reading — the tutorial remains the source of truth.
+> The skill works with **Claude Code** (which reads `.claude/skills/` by default) and with **GitHub Copilot Chat** (ask it to read the `SKILL.md` file). If you prefer a manual run, continue reading — the tutorial remains the source of truth.
 
 ## 1. Overview
 
@@ -33,7 +33,7 @@ A single Azure Container App that exposes a browser UI at `https://<app>.<region
 |---|---|---|
 | `llm-agent` | `agent-id-aws/llm-agent` (your ACR) | Public-facing Flask + LangChain agent. Receives user chat requests on port **3000**, decides when to call a tool, uses `boto3` to call **AWS Bedrock** for LLM completions, and calls `weather-api` for downstream data. Uses `AWS_WEB_IDENTITY_TOKEN_FILE=/azure-token/token` so `boto3` federates to AWS automatically. |
 | `sidecar` | `mcr.microsoft.com/entra-sdk/auth-sidecar` (Microsoft) | The **Microsoft Entra Agent ID auth sidecar**. Listens on `localhost:5000` (not exposed externally). `llm-agent` calls it to get Agent Identity tokens — app-only (**TR**, autonomous flow) or on-behalf-of a user (**TU**, OBO flow). Authenticates to Entra as the Blueprint app using `SignedAssertionFromManagedIdentity` — no client secret. |
-| `weather-api` | `agent-id-aws/weather-api` (your ACR) | Sample downstream API on `localhost:8080`. Validates the Agent Identity JWT on every request (JWKS signature check, issuer, audience, `appid`) and returns real Open-Meteo data only if the call is from the expected Agent Identity. Demonstrates how a production downstream service should authorize agent calls. |
+| `weather-api` | `agent-id-aws/weather-api` (your ACR) | Sample downstream API on `localhost:8080`. Validates the Agent Identity JWT on every request (JWKS signature check, issuer, audience, `appid`) and returns real Open-Meteo data only if the call is from the expected Agent Identity. Demonstrates how a hardened downstream service should authorize agent calls. |
 | `token-refresher` | `agent-id-aws/token-refresher` (your ACR) | Background worker, no ports. Every ~50 minutes: reads the Container App's managed-identity assertion from IMDS, exchanges it at Entra's `/oauth2/v2.0/token` endpoint for a v1 JWT that AWS STS accepts, and writes the JWT to `/azure-token/token`. `boto3` in `llm-agent` reads this file whenever it calls `AssumeRoleWithWebIdentity`. |
 
 **Why four containers and not one.** The Entra Agent ID sidecar and the token refresher are security-critical components that each do one job and are easy to audit in isolation. Keeping the agent image free of Entra and AWS credential-fetching code also means you can swap the agent framework (LangChain → Semantic Kernel → anything) without touching either auth path.
@@ -227,7 +227,7 @@ Before provisioning anything, pick a SKU for each of the following. The table li
 > [!WARNING]
 > **Bedrock model ID / region mismatch.** Requesting model access in the Bedrock console returns "Access granted" for the base model ID (`anthropic.claude-3-haiku-…`). The inference-profile form (`us.anthropic.…`) requires the region to be in the profile's region group. Outside `us-east-*` / `us-west-2`, use the regional base model ID.
 
-For the full decision matrix, see the skill reference: [`sku-sizing.md`](../../.github/skills/deploy-agent-aca-aws/references/sku-sizing.md).
+For the full decision matrix, see the skill reference: [`sku-sizing.md`](../../../.claude/skills/deploy-agent-aca-aws/references/sku-sizing.md).
 
 ## 3. Plan your federation topology
 
@@ -707,7 +707,7 @@ PREV_REV=$(az containerapp revision list -g "$RG" -n "$APP_NAME" \
 
 ### 11.1 Add the app's FQDN to the Client SPA redirect URIs
 
-The Client SPA app was created in [§5.2](#52-register-the-client-spa-app) with only `http://localhost:3003` as a redirect URI. The production FQDN must be added manually.
+The Client SPA app was created in [§5.2](#52-register-the-client-spa-app) with only `http://localhost:3003` as a redirect URI. The deployed FQDN must be added manually.
 
 ```bash
 GRAPH_TOKEN=$(az account get-access-token --resource https://graph.microsoft.com --query accessToken -o tsv)
@@ -825,7 +825,7 @@ If `AssumeRole` (without `WithWebIdentity`) appears, or `AccessDenied` is logged
 |---|---|---|
 | `InvalidIdentityToken: Incorrect token audience` (boto3 → STS) | MI token's audience is a GUID; STS rejects it | See [§14.1](#141-invalididentitytoken-incorrect-token-audience). |
 | `AADSTS65001: consent not granted` on OBO sign-in | Agent SP has app permissions only, not delegated `User.Read` | See [§14.2](#142-aadsts65001-user-or-administrator-has-not-consented). |
-| `AADSTS50011: redirect URI mismatch` in browser | SPA app is missing the production `https://<FQDN>` redirect URI | Add the production redirect URI to the Client SPA (see [§11](#11-phase-7--post-deployment-wiring)). |
+| `AADSTS50011: redirect URI mismatch` in browser | SPA app is missing the deployed `https://<FQDN>` redirect URI | Add the deployed redirect URI to the Client SPA (see [§11](#11-phase-7--post-deployment-wiring)). |
 | Graph `$filter=appId eq` returns empty for the Blueprint | Agent Identity Blueprint types are invisible to `$filter` | Use key-lookup form `/beta/applications(appId='<id>')`. The scripts in this repo already do this. |
 | `Directory.AccessAsUser.All` scope required (pwsh) | `az account get-access-token --resource graph` includes this scope, which Blueprint PATCH rejects | See [§14.3](#143-request_badrequest--directoryaccessasuserall). |
 | `403 Authorization_RequestDenied` on Blueprint create | User has `Application Administrator` but not an Agent ID role | Assign `Agent ID Developer` (template `adb2368d-a9be-41b5-8667-d96778e081b0`) or `Agent ID Administrator`. |
@@ -970,21 +970,70 @@ Source: [`sidecar/aws/azure-token-refresher/refresh.py`](../../../sidecar/aws/az
 
 ## 18. Appendix C — Clean teardown
 
+> **TIP — AI-assisted teardown.** If you use Claude Code or GitHub Copilot, invoke the [`teardown-agent-aca-aws`](../../../.claude/skills/teardown-agent-aca-aws/SKILL.md) skill. It runs the same commands below with dry-run by default and prompts at each destructive step.
+>
+> ```bash
+> # Dry run (default — prints commands, deletes nothing)
+> bash .claude/skills/teardown-agent-aca-aws/scripts/teardown-aca-aws.sh
+>
+> # Azure only
+> DRY_RUN=0 bash .claude/skills/teardown-agent-aca-aws/scripts/teardown-aca-aws.sh
+>
+> # Full teardown (Azure + AWS + Entra)
+> DRY_RUN=0 DELETE_AWS=1 DELETE_ENTRA=1 \
+>   bash .claude/skills/teardown-agent-aca-aws/scripts/teardown-aca-aws.sh
+> ```
+
+### 18.1 Order of operations
+
+Teardown follows the reverse of deployment. Run these in order; each step is safe to re-run if it partially fails.
+
+1. **Revoke OAuth consent** on the Agent SP (keeps a future redeploy clean).
+2. **Delete the Azure resource group** — removes the Container App, ACA environment, ACR, Log Analytics workspace, and the managed identity in one shot.
+3. **Delete AWS objects** *(opt-in)* — IAM role and OIDC provider. Skip if other roles in the same AWS account use the OIDC provider.
+4. **Delete Entra objects** *(opt-in)* — Intermediary app, Client SPA, Agent Identity, Blueprint. Blueprints are often shared across agents — **re-confirm before deleting**.
+
+### 18.2 Manual commands
+
 ```bash
-# Azure
+# 0. Load the deployment variables
+source /tmp/deploy-vars.sh
+
+# 1. Revoke OAuth consent on the Agent SP
+AGENT_SP_OID=$(az ad sp show --id "$AGENT_CLIENT_ID" --query id -o tsv)
+az rest --method GET \
+  --uri "https://graph.microsoft.com/v1.0/oauth2PermissionGrants?\$filter=clientId eq '$AGENT_SP_OID'" \
+  --query 'value[].id' -o tsv | while read -r g; do
+    az rest --method DELETE --uri "https://graph.microsoft.com/v1.0/oauth2PermissionGrants/$g"
+  done
+
+# 2. Azure — deletes Container App, ACA env, ACR, Log Analytics, MI in one call
 az group delete --name "$RG" --yes --no-wait
 
-# AWS
+# 3. AWS — only if nothing else uses this OIDC provider
 aws iam delete-role-policy --role-name "$AWS_ROLE_NAME" --policy-name BedrockInvokeOnly
 aws iam delete-role --role-name "$AWS_ROLE_NAME"
 aws iam delete-open-id-connect-provider \
   --open-id-connect-provider-arn "arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/sts.windows.net/${TENANT_ID}/"
 
-# Entra
-az ad app delete --id "$STS_APP_ID"
-az ad app delete --id "$CLIENT_SPA_APP_ID"
-# Delete the Blueprint and Agent via the Agent ID portal or Graph — see the Agent ID delete docs.
+# 4. Entra (opt-in — delete in this order)
+az ad app delete --id "$STS_APP_ID"          # Intermediary (AWS-federation-only)
+az ad app delete --id "$CLIENT_SPA_APP_ID"   # Client SPA
+# Agent Identity — via Agent ID portal, or Graph:
+az rest --method DELETE --uri "https://graph.microsoft.com/beta/agentIdentities/$AGENT_CLIENT_ID"
+# Blueprint — re-confirm, this may be shared:
+az ad app delete --id "$BLUEPRINT_APP_ID"
 ```
+
+### 18.3 Verify
+
+```bash
+az group exists --name "$RG"                                          # expect: false
+aws iam get-role --role-name "$AWS_ROLE_NAME" 2>&1 | head -1          # expect: NoSuchEntity
+az ad app show --id "$STS_APP_ID" 2>&1 | head -1                      # expect: not found
+```
+
+FICs on the Blueprint and Intermediary apps that point at the now-deleted MI become orphaned but inert — they cannot be re-used. Clean them with `az ad app federated-credential list/delete` if cosmetic cleanup matters.
 
 ## 19. References
 

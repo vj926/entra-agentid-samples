@@ -53,7 +53,7 @@ Before running any `az` command that provisions resources, confirm each SKU choi
 Ask the user to confirm: tenant ID, subscription ID, SKU choices, Ollama model. Then:
 
 ```bash
-cp .github/skills/deploy-agent-aca-dev/scripts/deploy-vars.sh.template /tmp/deploy-vars.sh
+cp .claude/skills/deploy-agent-aca-dev/scripts/deploy-vars.sh.template /tmp/deploy-vars.sh
 # edit /tmp/deploy-vars.sh with confirmed values
 source /tmp/deploy-vars.sh
 az login --tenant "$TENANT_ID" && az account set --subscription "$SUBSCRIPTION_ID"
@@ -66,7 +66,7 @@ Delegate to [entra-agent-id-setup](../entra-agent-id-setup/SKILL.md). Capture `B
 Configure the Blueprint for OBO using the ACA-compatible PowerShell script:
 
 ```bash
-pwsh -NoProfile -File .github/skills/deploy-agent-aca-dev/scripts/setup-obo-blueprint-for-aca.ps1 \
+pwsh -NoProfile -File .claude/skills/deploy-agent-aca-dev/scripts/setup-obo-blueprint-for-aca.ps1 \
   -BlueprintAppId "$BLUEPRINT_APP_ID" \
   -ClientSpaAppId "$CLIENT_SPA_APP_ID" \
   -AgentAppId "$AGENT_CLIENT_ID" \
@@ -90,13 +90,13 @@ Tutorial [§8](../../../sidecar/dev/deploy-local-llm-agent-sidecar-container-app
 If `OLLAMA_IMAGE_STRATEGY=baked`:
 
 ```bash
-bash .github/skills/deploy-agent-aca-dev/scripts/build-ollama-image.sh
+bash .claude/skills/deploy-agent-aca-dev/scripts/build-ollama-image.sh
 ```
 
 ### Step 5 — Deploy the multi-container app
 
 ```bash
-envsubst < .github/skills/deploy-agent-aca-dev/scripts/containerapp.yaml.template > /tmp/containerapp.yaml
+envsubst < .claude/skills/deploy-agent-aca-dev/scripts/containerapp.yaml.template > /tmp/containerapp.yaml
 az containerapp update -g "$RG" -n "$APP_NAME" --yaml /tmp/containerapp.yaml
 ```
 
@@ -104,11 +104,11 @@ az containerapp update -g "$RG" -n "$APP_NAME" --yaml /tmp/containerapp.yaml
 
 Two things that cannot be done before deploy:
 
-1. **Add production SPA redirect URI** — `bash .github/skills/deploy-agent-aca-dev/scripts/add-spa-redirect-uri.sh`
+1. **Add deployed SPA redirect URI** — `bash .claude/skills/deploy-agent-aca-dev/scripts/add-spa-redirect-uri.sh`
 2. **Grant Agent → Graph delegated `User.Read`** (fixes `AADSTS65001`):
 
    ```bash
-   pwsh -NoProfile -File .github/skills/deploy-agent-aca-dev/scripts/grant-agent-obo-consent.ps1 \
+   pwsh -NoProfile -File .claude/skills/deploy-agent-aca-dev/scripts/grant-agent-obo-consent.ps1 \
      -AgentAppId "$AGENT_CLIENT_ID" -TenantId "$TENANT_ID"
    ```
 
@@ -123,7 +123,7 @@ Tutorial [§11](../../../sidecar/dev/deploy-local-llm-agent-sidecar-container-ap
 If all prerequisites are in place and SKU variables are confirmed:
 
 ```bash
-bash .github/skills/deploy-agent-aca-dev/scripts/deploy-aca-dev.sh
+bash .claude/skills/deploy-agent-aca-dev/scripts/deploy-aca-dev.sh
 ```
 
 Idempotent. Invokes steps 2–5 in order. Steps 0, 1, 6 require human decisions and remain manual.
