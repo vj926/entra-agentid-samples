@@ -143,8 +143,8 @@ The docker-compose version of this sample uses `BLUEPRINT_CLIENT_SECRET` because
 ### 2.3 Repository
 
 ```bash
-git clone https://github.com/<org>/3P-Agent-ID-Demo.git
-cd 3P-Agent-ID-Demo
+git clone https://github.com/microsoft/entra-agentid-samples.git
+cd entra-agentid-samples
 ```
 
 ## 2.5 Choose your SKUs

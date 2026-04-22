@@ -194,8 +194,8 @@ Static credentials survive leaks (often for months). Federated tokens in this de
 Clone the sample repository. All paths in this tutorial are relative to the repository root.
 
 ```bash
-git clone https://github.com/<org>/3P-Agent-ID-Demo.git
-cd 3P-Agent-ID-Demo
+git clone https://github.com/microsoft/entra-agentid-samples.git
+cd entra-agentid-samples
 ```
 
 ## 2.5 Choose your SKUs
