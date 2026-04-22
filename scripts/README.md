@@ -75,7 +75,7 @@ BLUEPRINT_CLIENT_SECRET=<secret from Start-EntraAgentIDWorkflow>
 AGENT_CLIENT_ID=<agent-app-id from Step 1>
 ```
 
-> For production on Azure App Service / Container Apps, **do not set `BLUEPRINT_CLIENT_SECRET`**. Use `SourceType=SignedAssertionFromManagedIdentity` instead. See [`../deploy/azure/container-apps/`](../deploy/azure/container-apps/).
+> When deployed on Azure App Service / Container Apps, **do not set `BLUEPRINT_CLIENT_SECRET`**. Use `SourceType=SignedAssertionFromManagedIdentity` instead. See [`../deploy/azure/container-apps/`](../deploy/azure/container-apps/).
 
 ### Step 3 — Start the sidecar
 

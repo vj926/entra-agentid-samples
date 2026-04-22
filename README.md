@@ -13,7 +13,9 @@ Runnable samples for **Microsoft Entra Agent ID** — Entra's purpose-built iden
 ## Quick start
 
 1. Provision Entra objects: [`scripts/README.md`](scripts/README.md)
-2. Run a local demo: [`sidecar/dev/README.md`](sidecar/dev/README.md)
+2. Run a local demo:
+   - Local-LLM (Ollama, offline): [`sidecar/dev/README.md`](sidecar/dev/README.md)
+   - AWS Bedrock (Claude): [`sidecar/aws/README.md`](sidecar/aws/README.md)
 3. Deploy to Azure Container Apps: [`deploy/azure/container-apps/dev/README.md`](deploy/azure/container-apps/dev/README.md) (local-LLM) or [`deploy/azure/container-apps/aws/README.md`](deploy/azure/container-apps/aws/README.md) (AWS Bedrock)
 
 > [!TIP]

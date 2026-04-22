@@ -158,7 +158,7 @@ Works on **macOS**, **Linux**, and **Windows 10/11**.
 
 You also need:
 
-1. **A registered Agent ID in Microsoft Entra** — the repo-root PowerShell workflow creates the Blueprint app, client secret, and Agent ID. See [§6.2](#62-first-time-setup--create-the-entra-objects).
+1. **A registered Agent ID in Microsoft Entra** — the PowerShell workflow in [`scripts/README.md`](../../scripts/README.md) creates the Blueprint app, client secret, and Agent ID. See [§6.2](#62-first-time-setup--create-the-entra-objects).
 2. **An AWS account with Bedrock model access** — by default this sample uses `us.anthropic.claude-3-haiku-20240307-v1:0`. Enable model access in the AWS Bedrock console (*Model access → Manage model access → Anthropic Claude 3 Haiku → Save*). Approval is usually instant.
 3. **AWS credentials** for one of the three tiers in [§5](#5-aws-authentication--pick-the-right-tier).
 
@@ -210,9 +210,12 @@ if ((Test-Path .env) -and (Select-String '^BLUEPRINT_APP_ID=.+' .env -Quiet)) { 
 
 Run this **once per tenant**. It creates the Blueprint app, Agent ID, and the SPA app used for OBO sign-in.
 
+> [!TIP]
+> **Using Claude Code or GitHub Copilot Chat?** Invoke the [`entra-agent-id-setup`](../../.claude/skills/entra-agent-id-setup/SKILL.md) skill — it runs steps 6.2a–6.2c in one guided pass and checks your Entra role (`Agent ID Developer` or higher) before creating anything. Typically cuts this section from ~20 minutes to a few.
+
 **a. Create Blueprint + Agent ID** (autonomous flow only)
 
-Follow the PowerShell workflow in the **[repo root README](../../README.md)** (works on macOS, Linux and Windows with [PowerShell 7+](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell)). At the end you'll have:
+Follow the PowerShell workflow in [`scripts/README.md`](../../scripts/README.md) (works on macOS, Linux and Windows with [PowerShell 7+](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell)). At the end you'll have:
 
 - `TENANT_ID` — your Entra tenant
 - `BLUEPRINT_APP_ID` — Blueprint app registration
