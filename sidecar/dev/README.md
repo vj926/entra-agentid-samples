@@ -1,10 +1,8 @@
-# Local Dev Sidecar (Ollama Edition)
+# Run the Sidecar Locally — Developer Quickstart (Ollama)
 
 A visual, hands-on demonstration of how AI agents use **Microsoft Entra Agent ID** — via the official **Microsoft Entra SDK auth sidecar** — to securely call downstream APIs. Runs entirely on your laptop with a local LLM via [Ollama](https://ollama.com).
 
-> **TODO:** Screenshots of the UI (chat view, token trace panel, OBO sign-in) need to be captured and added to `docs/images/` before publishing.
-
-> **New to Agent ID?** Start with the [Sidecar Guide](../SIDECAR-GUIDE.md) for the fundamentals. This sample builds on that with a complete end-to-end demo.
+> **New to Agent ID?** Start with [The Sidecar Design Pattern](../README.md) for the concepts. This sample puts the pattern into a working end-to-end app with a chat UI and token-trace panel.
 
 ---
 

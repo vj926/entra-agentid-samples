@@ -1,10 +1,10 @@
-# AWS Bedrock Sidecar (Cloud LLM Edition)
+# AWS: Amazon Bedrock Agent with Entra Agent ID Sidecar
 
 A visual, hands-on demonstration of how AI agents use **Microsoft Entra Agent ID** — via the official **Microsoft Entra SDK auth sidecar** — to securely call downstream APIs. This variant uses **AWS Bedrock** (Anthropic Claude) as the LLM, proving the sidecar pattern works identically across clouds.
 
 > **Looking for the local-only version?** See [`sidecar/dev`](../dev/README.md) — same architecture, runs entirely offline with Ollama.
 >
-> **New to Agent ID?** Start with the [Sidecar Guide](../SIDECAR-GUIDE.md) for the fundamentals.
+> **New to Agent ID?** Start with [The Sidecar Design Pattern](../README.md) for the concepts.
 
 ---
 
