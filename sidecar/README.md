@@ -2,7 +2,7 @@
 
 How the **Microsoft Entra Agent ID sidecar** lets an AI agent call downstream APIs with a secure, per-agent identity — without the agent code ever seeing a secret.
 
-This document is the conceptual overview (TOC §2.1). For runnable samples, see:
+For runnable samples, see:
 - [`dev/`](dev/README.md) — local-LLM (Ollama) edition
 - [`aws/`](aws/README.md) — AWS Bedrock (Claude) edition
 - [`weather-api/`](weather-api/README.md) — shared downstream API used by both
@@ -111,8 +111,8 @@ Both flows are demonstrated end-to-end in [`dev/`](dev/README.md) and [`aws/`](a
 └──────────────────────────────────────────────────────────────┘
 ```
 
-- **[`dev/`](dev/README.md)** — LangChain + Ollama (local), runs entirely offline via `docker-compose`. Fastest path to a working demo. Ties to TOC §2.3.
-- **[`aws/`](aws/README.md)** — LangChain + AWS Bedrock (Claude) with Azure→AWS OIDC federation via the `azure-token-refresher` companion. Ties to TOC §3.1.
+- **[`dev/`](dev/README.md)** — LangChain + Ollama (local), runs entirely offline via `docker-compose`. Fastest path to a working demo.
+- **[`aws/`](aws/README.md)** — LangChain + AWS Bedrock (Claude) with Azure→AWS OIDC federation via the `azure-token-refresher` companion.
 - **[`weather-api/`](weather-api/README.md)** — minimal token-validated mock API. RS256 signature check via JWKS, issuer and audience validation, agent-identity claim verification.
 
 For deploying any of the above to Azure, see [`../deploy/azure/container-apps/`](../deploy/azure/container-apps/) — zero stored secrets, federated credentials only.
