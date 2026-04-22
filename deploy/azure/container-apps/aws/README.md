@@ -18,6 +18,11 @@ In this tutorial, you learn how to:
 > * Build and deploy a four-container app: agent, Entra Agent ID sidecar, downstream API, and token refresher.
 > * Verify the autonomous and on-behalf-of (OBO) identity flows end to end.
 
+> [!TIP]
+> **Recommended approach: AI-assisted setup.** This tutorial has many prerequisites and moving parts — Entra role assignments, Bedrock model enablement, ACR image builds, the v1 token-exchange intermediary app, and post-deploy manual wiring. Running it end-to-end by hand is fully supported (every command is documented below), but the fastest and least error-prone path is to **pair an AI assistant with the skill packaged in this repo**: [`.claude/skills/deploy-agent-aca-aws/SKILL.md`](../../../.claude/skills/deploy-agent-aca-aws/SKILL.md).
+>
+> The skill works with **Claude Code** (which reads `.claude/skills/` by default) and with **GitHub Copilot Chat** (ask it to read the `SKILL.md` file). The assistant confirms your SKU choices, wires the v1 token exchange, handles the post-deploy manual steps, and surfaces known failure modes in real time. If you prefer a manual run, continue reading — the tutorial remains the source of truth.
+
 ## 1. Overview
 
 ### 1.1 What you build
@@ -814,6 +819,44 @@ If `AssumeRole` (without `WithWebIdentity`) appears, or `AccessDenied` is logged
 
 ## 14. Troubleshooting
 
+### 14.0 Quick reference
+
+| Symptom | Root cause | Fix |
+|---|---|---|
+| `InvalidIdentityToken: Incorrect token audience` (boto3 → STS) | MI token's audience is a GUID; STS rejects it | See [§14.1](#141-invalididentitytoken-incorrect-token-audience). |
+| `AADSTS65001: consent not granted` on OBO sign-in | Agent SP has app permissions only, not delegated `User.Read` | See [§14.2](#142-aadsts65001-user-or-administrator-has-not-consented). |
+| `AADSTS50011: redirect URI mismatch` in browser | SPA app is missing the production `https://<FQDN>` redirect URI | Add the production redirect URI to the Client SPA (see [§11](#11-phase-7--post-deployment-wiring)). |
+| Graph `$filter=appId eq` returns empty for the Blueprint | Agent Identity Blueprint types are invisible to `$filter` | Use key-lookup form `/beta/applications(appId='<id>')`. The scripts in this repo already do this. |
+| `Directory.AccessAsUser.All` scope required (pwsh) | `az account get-access-token --resource graph` includes this scope, which Blueprint PATCH rejects | See [§14.3](#143-request_badrequest--directoryaccessasuserall). |
+| `403 Authorization_RequestDenied` on Blueprint create | User has `Application Administrator` but not an Agent ID role | Assign `Agent ID Developer` (template `adb2368d-a9be-41b5-8667-d96778e081b0`) or `Agent ID Administrator`. |
+| `AADSTS50079` on `az login` | New user has not completed MFA enrollment | Sign in once via browser to enroll, then retry. |
+| Container App fails to pull image (`ImagePullBackOff`) | MI does not have `AcrPull` on the registry | `az role assignment create --assignee-object-id "$MI_OBJECT_ID" --assignee-principal-type ServicePrincipal --scope "$ACR_ID" --role AcrPull`. |
+| Token refresher logs show `iss=…/v2.0` | Refresher fell back to v2; exchange misconfigured | Confirm the intermediary app has `requestedAccessTokenVersion=1` and `identifierUris=["api://<self>"]`. |
+| CloudTrail shows no `AssumeRoleWithWebIdentity` events | Refresher is writing but the agent is not refreshing credentials | Restart the `llm-agent` container; `boto3` reads the token file on each call but caches STS credentials for ~50 min. |
+| `identifierUris` PATCH rejected | Tenant blocks custom `api://` URIs | Use the `api://<self-appId>` form, never a custom label. |
+| Sidecar fails to start with a secret-related error | `SignedAssertionFromManagedIdentity` source type not picked up | Confirm env vars: `AzureAd__ClientCredentials__0__SourceType=SignedAssertionFromManagedIdentity` and `__ManagedIdentityClientId=""` (empty for system-assigned). |
+| `AccessDeniedException: bedrock:InvokeModel` | IAM policy is missing the target model's ARN | See [§14.4](#144-accessdeniedexception-bedrockinvokemodel). |
+| `ContainerAppInvalidResourceTotal` | CPU/memory totals don't match a supported combo | See [§14.5](#145-containerappinvalidresourcetotal). Working combo: `0.5 + 0.25 + 0.25 + 0.25 vCPU`, `1 + 0.5 + 0.5 + 0.5 GiB`. |
+
+### 14.0.1 Diagnostic one-liners
+
+```bash
+# Verify the token refresher is writing v1 tokens
+az containerapp logs show -g "$RG" -n "$APP_NAME" --container token-refresher --type console --tail 5
+
+# Verify the managed identity object ID
+az containerapp show -g "$RG" -n "$APP_NAME" --query identity.principalId -o tsv
+
+# Verify the AWS role trust condition
+aws iam get-role --role-name "$AWS_ROLE_NAME" --query 'Role.AssumeRolePolicyDocument' --output json
+
+# Verify the intermediary app issues v1 tokens
+az rest --method GET --url "https://graph.microsoft.com/v1.0/applications(appId='$STS_APP_ID')?\$select=api" --query api.requestedAccessTokenVersion
+
+# Verify the Blueprint federated credential subject
+az rest --method GET --url "https://graph.microsoft.com/beta/applications(appId='$BLUEPRINT_APP_ID')/federatedIdentityCredentials"
+```
+
 ### 14.1 `InvalidIdentityToken: Incorrect token audience`
 
 The token refresher is writing the raw managed-identity token instead of the exchanged v1 token, or the intermediary app isn't set to v1. Confirm:
@@ -883,15 +926,47 @@ To reduce cost further, set `minReplicas: 0` and enable HTTP-triggered scale, or
 
 ## 17. Appendix B — The token refresher explained
 
-The refresher is ~50 lines of standard library Python. One loop, three steps, on a 50-minute cadence:
+### 17.1 Why a fourth container at all
+
+The dev variant of this sample ([`deploy/azure/container-apps/dev/`](../dev/README.md)) runs with **three** containers: agent, Entra Agent ID sidecar, and downstream API. It doesn't need a token refresher because nothing outside Microsoft Entra ID has to accept its tokens.
+
+The AWS variant is different. The agent calls **AWS Bedrock**, and AWS Bedrock credentials come from **AWS STS**, which only accepts a web-identity JWT if three conditions are met:
+
+1. The JWT was issued by a provider AWS trusts — requires an **OIDC identity provider** plus an **IAM role with a trust policy** in the AWS account (both created in [§8](#8-phase-4--federate-the-managed-identity-to-aws-bedrock)).
+2. The JWT's `aud` claim matches what the role's trust policy expects (`sts.amazonaws.com`, or the intermediary-app URI in this design).
+3. The JWT is a **v1 Entra token** (`iss: https://sts.windows.net/<tenant>/`). AWS STS rejects **v2 Entra tokens** (`iss: https://login.microsoftonline.com/<tenant>/v2.0`).
+
+The token the Container App's managed identity gets for free from IMDS fails conditions 2 **and** 3: its audience is a GUID like `api://AzureADTokenExchange`, and it's a v2 JWT. It cannot be handed to `AssumeRoleWithWebIdentity` as-is.
+
+So something has to sit between the MI and `boto3` and convert "raw MI token → v1 JWT that STS will accept." That is the **`token-refresher` container**. It is a **perpetual federation bridge**:
+
+- The only long-lived trust is the AWS IAM role's OIDC trust policy on the Container App's managed identity (`sts.windows.net/<tenant>/` as the OIDC provider, the MI's object ID as the `sub` claim).
+- Everything else rotates: the MI assertion (~24 h), the exchanged v1 token (~60 min), the AWS STS credentials (~50 min).
+- No client secret, no AWS access key, no certificate anywhere in the app.
+
+### 17.2 Why not put this in the agent code
+
+Three reasons:
+
+- **Separation of concerns.** The agent image stays free of Entra and AWS credential plumbing. You can swap LangChain for Semantic Kernel or any other framework without touching either auth path.
+- **Restart isolation.** If Entra or AWS hiccups, the refresher dies and Container Apps restarts **only that container**, not the agent.
+- **Auditability.** The refresher is ~50 lines of stdlib Python. Reviewing the security boundary means reading one small file.
+
+### 17.3 The loop
+
+One loop, three steps, on a 50-minute cadence:
 
 1. **Get the managed-identity assertion.** Call the Container App IMDS endpoint (`IDENTITY_ENDPOINT` + `X-IDENTITY-HEADER`) for `resource=api://AzureADTokenExchange`.
-2. **Exchange for a v1 token.** POST to `https://login.microsoftonline.com/<tenant>/oauth2/v2.0/token` with `grant_type=client_credentials`, `client_id=<STS_APP_ID>`, `client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer`, `client_assertion=<MI assertion>`, `scope=api://<STS_APP_ID>/.default`. The response token has `iss=https://sts.windows.net/<tenant>/` and `aud=api://<STS_APP_ID>`.
+2. **Exchange for a v1 token.** POST to `https://login.microsoftonline.com/<tenant>/oauth2/v2.0/token` with `grant_type=client_credentials`, `client_id=<STS_APP_ID>`, `client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer`, `client_assertion=<MI assertion>`, `scope=api://<STS_APP_ID>/.default`. The response token has `iss=https://sts.windows.net/<tenant>/` and `aud=api://<STS_APP_ID>`. This step is what produces the **v1 JWT** that AWS STS will accept.
 3. **Atomically write it to the shared file.** Write to `AWS_WEB_IDENTITY_TOKEN_FILE + ".tmp"`, `os.replace()` to the final path. `boto3` reads this file whenever it calls `AssumeRoleWithWebIdentity`.
 
 The refresher exits and restarts on any error, relying on the Container Apps restart policy to recover from transient IMDS or Entra failures.
 
-Source: [`sidecar/aws/azure-token-refresher/refresh.py`](./azure-token-refresher/refresh.py).
+### 17.4 Would this go away if AWS accepted v2 tokens?
+
+Yes. If AWS STS ever accepted Entra v2 JWTs and allowed configurable audiences without an intermediary app, the refresher would disappear and the AWS variant would be three containers, just like dev. The pattern is: **one refresher per external identity provider that has stricter JWT requirements than what the Microsoft Entra SDK for Agent ID emits by default.**
+
+Source: [`sidecar/aws/azure-token-refresher/refresh.py`](../../../sidecar/aws/azure-token-refresher/refresh.py).
 
 ## 18. Appendix C — Clean teardown
 

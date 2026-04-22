@@ -20,6 +20,11 @@ In this tutorial, you learn how to:
 > * Build and deploy a four-container app: agent, Entra Agent ID sidecar, downstream API, and Ollama.
 > * Verify the autonomous and on-behalf-of (OBO) identity flows end to end.
 
+> [!TIP]
+> **Recommended approach: AI-assisted setup.** This tutorial has several moving parts — Entra role assignments, the Ollama model-pull strategy (runtime vs baked), ACR image builds, and post-deploy manual wiring. Running it end-to-end by hand is fully supported (every command is documented below), but the fastest and least error-prone path is to **pair an AI assistant with the skill packaged in this repo**: [`.claude/skills/deploy-agent-aca-dev/SKILL.md`](../../../.claude/skills/deploy-agent-aca-dev/SKILL.md).
+>
+> The skill works with **Claude Code** (which reads `.claude/skills/` by default) and with **GitHub Copilot Chat** (ask it to read the `SKILL.md` file). The assistant confirms your SKU choices, picks the right Ollama model strategy, handles the post-deploy manual steps, and surfaces known failure modes in real time. If you prefer a manual run, continue reading — the tutorial remains the source of truth.
+
 ## 1. Overview
 
 ### 1.1 What you build
@@ -576,12 +581,37 @@ There is no AWS or GCP rotation — because there is no AWS or GCP.
 |---|---|---|
 | `ollama_available: false` in status | Ollama container failed to pull model (runtime-pull) or ran out of memory | Check Ollama logs; bump memory to 2Gi; switch to `baked` strategy |
 | Ollama container crash-loops with `out of memory` | 7B model on <3 GB RAM | Drop to 1.5B model or move to Dedicated profile |
+| Ollama logs show `pulling manifest…` then 404 | Model name / tag wrong | Verify the exact name with `docker run --rm ollama/ollama:latest ollama pull <name>` locally |
+| First request hangs 30+ s | `runtime-pull` strategy cold start | Switch to the `baked` strategy |
 | `AADSTS65001` on browser OBO sign-in | Missing delegated `User.Read` admin consent | Run `grant-agent-obo-consent.ps1` (see [§5.4](#54-admin-consent-the-agents-delegated-graph-permission)) |
 | `AADSTS50011: redirect URI mismatch` | Production `https://<FQDN>` not in SPA redirect URIs | Run `add-spa-redirect-uri.sh` (see [§10.1](#101-add-the-apps-fqdn-to-the-client-spa-redirect-uris)) |
+| `AADSTS50079` on `az login` | New user has not completed MFA enrollment | Sign in once via browser to enroll, then retry |
 | Graph `$filter=appId eq` returns empty for Blueprint | Agent Identity Blueprint types invisible to `$filter` | Use key-lookup form `/beta/applications(appId='<id>')` — the scripts in this skill already do this |
 | <a name="133-request_badrequest-directoryaccessasuserall"></a>`REQUEST_BADREQUEST: Directory.AccessAsUser.All` on Blueprint PATCH | `az account get-access-token --resource graph` includes `Directory.AccessAsUser.All` which Blueprint rejects | Use pwsh `Connect-MgGraph -Scopes …` with narrow scopes (never `.default`) |
 | `403 Authorization_RequestDenied` on Blueprint create | Signing-in user has `Application Administrator` but not an Agent ID role | Assign `Agent ID Developer` or `Agent ID Administrator` |
-| Container App crash-looping | Invalid CPU/memory combination | Totals must match a valid ACA consumption combo; see error for valid pairs |
+| Container App fails to pull image (`ImagePullBackOff`) | MI does not have `AcrPull` on the registry | `az role assignment create --assignee-object-id "$MI_OBJECT_ID" --assignee-principal-type ServicePrincipal --scope "$ACR_ID" --role AcrPull` |
+| Container App crash-looping | Invalid CPU/memory combination | Totals must match a valid ACA consumption combo; see error for valid pairs. Demo: `0.5 + 0.25 + 0.25 + 0.75 vCPU = 1.75`, `1 + 0.5 + 0.5 + 1.5 = 3.5 GiB` |
+| Sidecar startup error about `ClientSecret` | Left-over docker-compose env var | Ensure the manifest uses `AzureAd__ClientCredentials__0__SourceType=SignedAssertionFromManagedIdentity` with empty `ManagedIdentityClientId` for system-assigned |
+| ACA ingress returns 504 on first chat | Ollama cold-loading a large model; exceeded 4-minute ingress timeout | Use a smaller model or switch to a Dedicated profile |
+
+### 13.1 Diagnostic one-liners
+
+```bash
+# Verify the MI object ID
+az containerapp show -g "$RG" -n "$APP_NAME" --query identity.principalId -o tsv
+
+# Verify the Blueprint federated credential subject
+az rest --method GET --url "https://graph.microsoft.com/beta/applications(appId='$BLUEPRINT_APP_ID')/federatedIdentityCredentials"
+
+# Verify the Ollama served model list
+curl -sS "https://${APP_FQDN}/api/status" | python3 -m json.tool
+
+# Tail Ollama logs
+az containerapp logs show -g "$RG" -n "$APP_NAME" --container ollama --tail 50
+
+# Tail sidecar logs (for Entra auth errors)
+az containerapp logs show -g "$RG" -n "$APP_NAME" --container sidecar --tail 50
+```
 
 ## 14. Cost (demo profile, ~24/7)
 
