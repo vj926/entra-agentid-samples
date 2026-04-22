@@ -183,6 +183,36 @@ Static credentials survive leaks (often for months). Federated tokens in this de
 * An AWS account with Bedrock model access enabled in your target region for **Anthropic Claude 3 Haiku**. Request access from the Bedrock console if needed.
 * An IAM principal with permission to create OIDC identity providers and IAM roles.
 
+#### 2.2.1 Pre-flight: verify Bedrock access before deploying
+
+Run this 30-second check **before** provisioning anything. It confirms three things at once: model access is granted, the region hosts the model, and your AWS credentials work. Most late-stage deploy failures in this tutorial come from skipping this step.
+
+```bash
+AWS_REGION=us-east-2
+BEDROCK_MODEL_ID=us.anthropic.claude-3-haiku-20240307-v1:0
+
+aws bedrock-runtime invoke-model \
+  --region "$AWS_REGION" \
+  --model-id "$BEDROCK_MODEL_ID" \
+  --body '{"anthropic_version":"bedrock-2023-05-31","max_tokens":10,"messages":[{"role":"user","content":"hi"}]}' \
+  --cli-binary-format raw-in-base64-out \
+  /tmp/bedrock-preflight.json \
+  && echo "✅ Bedrock reachable from this account/region" \
+  || echo "❌ Fix access/region before deploying"
+```
+
+**If you see an error, these are the common ones:**
+
+| Error | Cause | Fix |
+|---|---|---|
+| `AccessDeniedException: You don't have access to the model with the specified model ID` | Model access not granted in this account | Bedrock console → **Model access** → enable **Anthropic Claude 3 Haiku**. Approval is usually instant. |
+| `ValidationException: Invocation of model ID … isn't supported in …` | Region doesn't host the inference profile | Use `us-east-1`, `us-east-2`, or `us-west-2` for `us.anthropic.…` IDs; or switch to the bare `anthropic.claude-3-haiku-…` ID for other regions. |
+| `ExpiredTokenException` / `InvalidClientTokenId` | AWS creds missing or expired | `aws sso login` or export fresh STS creds. |
+| `AccessDeniedException: bedrock:InvokeModel` | IAM principal is missing the action | Attach `bedrock:InvokeModel` on `arn:aws:bedrock:*::foundation-model/anthropic.claude-3-haiku-*` and on the inference-profile ARN. |
+
+> [!TIP]
+> If you only want to check whether the model exists in the region (without invoking it), use `aws bedrock list-foundation-models --region "$AWS_REGION" --query 'modelSummaries[?contains(modelId,\`claude-3-haiku\`)].modelId'`. This doesn't tell you whether access is granted — only `invoke-model` does that end-to-end.
+
 ### 2.3 Tooling
 
 | Tool | Minimum version | Notes |
