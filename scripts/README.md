@@ -9,8 +9,6 @@ Shared PowerShell and bash tooling that provisions the Entra objects every sampl
 
 Run these once per tenant. After that, the IDs go into each sample's `.env` (local dev) or into federated credentials (Azure production).
 
-> TOC: these scripts back **§1.2 Prerequisites** and are referenced from the §2 and §3 samples. For the conceptual overview see [`../sidecar/README.md`](../sidecar/README.md).
-
 ## Prerequisites
 
 - **PowerShell 7.4+** (`pwsh`) on macOS, Linux, or Windows. The workflow uses `Microsoft.Graph.*` modules 2.35+.
