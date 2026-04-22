@@ -23,7 +23,7 @@ Entra Agent ID gives each agent its own identity. The sidecar pattern makes that
 The **[Microsoft Entra SDK auth sidecar](https://mcr.microsoft.com/en-us/product/entra-sdk/auth-sidecar/about)** (`mcr.microsoft.com/entra-sdk/auth-sidecar`) runs as a second container next to your agent. It exposes a small HTTP API on the pod-local network and handles:
 
 - Client-credentials exchange with `login.microsoftonline.com`
-- Blueprint → Agent Identity token exchange (T1 → T2)
+- Client-credentials or federated identity credential (FIC) token acquisition for the Agent Identity (autonomous flow)
 - On-Behalf-Of (OBO) flows for user-context calls
 - Token caching, refresh, and expiry
 - Credential source abstraction — `ClientSecret` for dev, `SignedAssertionFromManagedIdentity` for production, same API
@@ -51,77 +51,11 @@ The security boundary is explicit: the sidecar has no host port. Only services i
 
 Provisioning is covered in [`../scripts/README.md`](../scripts/README.md) — the `Start-EntraAgentIDWorkflow` PowerShell cmdlet creates all three Entra objects in one shot.
 
-## Two token flows
-
-### Autonomous (app-only) — **TR**
-
-The agent runs on its own schedule (cron, queue trigger, MCP request from another service). There is no user in the loop.
-
-```
-    ┌────────────┐   GET /AuthorizationHeader/graph           ┌──────────────────┐
-    │   Agent    ├────────────────────────────────────────────▶│ Sidecar          │
-    │ (your app) │   ?AgentIdentity=<agent-app-id>             │                  │
-    └────────────┘                                             │   T1: Blueprint  │
-          ▲                                                    │       token      │
-          │  Authorization: Bearer <T2>                        │         │        │
-          │                                                    │         ▼        │
-          └────────────────────────────────────────────────────┤   T2: Agent      │
-                                                               │       token      │
-    ┌────────────┐                                             └──────────────────┘
-    │ Downstream │  ← Agent calls with T2                               │
-    │    API     │                                                     ▼
-    └────────────┘                                        Microsoft Entra ID
-```
-
-### On-Behalf-Of (OBO) — **TF1**
-
-A signed-in user asks the agent to do something on their behalf. The downstream API must see the user's identity, not just the agent's.
-
-```
-    User ──sign-in──▶ Client SPA ──(Tc: user token)──▶ Agent ──▶ Sidecar
-                                                                    │
-                                                                    │ OBO exchange:
-                                                                    │   Tc + Blueprint
-                                                                    ▼
-                                                         Microsoft Entra ID
-                                                                    │
-                                                                    ▼
-                                                               TF1 = Agent-on-behalf-of-user
-                                                                    │
-                                                                    ▼
-                                                         Agent ──▶ Downstream API
-                                                                    (sees both user and agent claims)
-```
-
-Both flows are demonstrated end-to-end in [`dev/`](dev/README.md) and [`aws/`](aws/README.md).
-
-## How the samples fit together
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│                  sidecar/ samples                            │
-│                                                              │
-│  dev/    ─┐                                                  │
-│  aws/    ─┼──▶  weather-api/  (shared, validates tokens)    │
-│  (gcp/)  ─┘                                                  │
-│                                                              │
-│  Each agent sample includes its own auth sidecar container.  │
-│  All three call the same weather-api for an apples-to-apples │
-│  cross-cloud demo.                                           │
-└──────────────────────────────────────────────────────────────┘
-```
-
-- **[`dev/`](dev/README.md)** — LangChain + Ollama (local), runs entirely offline via `docker-compose`. Fastest path to a working demo.
-- **[`aws/`](aws/README.md)** — LangChain + AWS Bedrock (Claude) with Azure→AWS OIDC federation via the `azure-token-refresher` companion.
-- **[`weather-api/`](weather-api/README.md)** — minimal token-validated mock API. RS256 signature check via JWKS, issuer and audience validation, agent-identity claim verification.
-
-For deploying any of the above to Azure, see [`../deploy/azure/container-apps/`](../deploy/azure/container-apps/) — zero stored secrets, federated credentials only.
-
 ## What you'll learn by running the samples
 
 - The difference between a Blueprint and an Agent Identity, and why agents need their own identity.
 - How the sidecar exposes `/AuthorizationHeader` (get token) and `/DownstreamApi` (token + proxied call) endpoints.
-- How to hand a user's token (`Tc`) to the agent and have the sidecar mint an OBO Agent token (`TF1`).
+- How to forward a signed-in user's token to the agent and have the Microsoft Entra SDK for Agent ID mint an agent-on-behalf-of-user token via OBO.
 - How the downstream API validates agent tokens cryptographically — signature, issuer, `xms_par_app_azp`, audience.
 - How to swap from `ClientSecret` (dev) to `SignedAssertionFromManagedIdentity` (Azure production) without changing a line of agent code.
 
