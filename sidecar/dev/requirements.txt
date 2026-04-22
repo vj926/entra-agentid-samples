@@ -1,0 +1,7 @@
+flask>=2.3.0
+flask-cors>=4.0.0
+requests>=2.31.0
+langchain>=1.0.0
+langchain-core>=1.0.0
+langchain-ollama>=1.0.0
+langgraph>=1.0.0
