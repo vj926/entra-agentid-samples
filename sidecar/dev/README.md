@@ -12,7 +12,7 @@ This sample deliberately uses the **official [Microsoft Entra SDK auth sidecar](
 
 - **Interoperable across any cloud or on-prem** — the same container image (`mcr.microsoft.com/entra-sdk/auth-sidecar`) runs identically on Azure, AWS, GCP, Kubernetes, or a laptop. Standard OAuth2 flows (client credentials, OBO, federated credentials) are implemented once by the identity team and consumed the same way everywhere.
 - **Your agent code stays decoupled from token exchanges.** The LLM agent never handles `client_id`, `client_secret`, certificates, JWKS, token caching, or OBO exchange. It just asks the sidecar: *"Give me an authorization header for this downstream API."*
-- **Swap credentials without touching agent code.** `ClientSecret` for dev, `SignedAssertionFromManagedIdentity` for production on Azure — change one env var, no code changes.
+- **Swap credentials without touching agent code.** `ClientSecret` for dev, `SignedAssertionFromManagedIdentity` when deployed on Azure — change one env var, no code changes.
 - **Token caching, refresh, and expiry are handled for you.** No MSAL integration to debug.
 - **Security boundary is explicit.** The sidecar has no host port. Only services inside the Docker network can request tokens — your agent, not your browser, not random processes on the host.
 
@@ -25,7 +25,10 @@ This sample deliberately uses the **official [Microsoft Entra SDK auth sidecar](
 | Pass through user token for OBO | Validate & forward user assertion |
 | Handle business logic | Talk to `login.microsoftonline.com` |
 
-If you're shipping an agent to production, **this separation is the recommended pattern** — your code never sees a secret, and all credential policy lives in one place.
+When you deploy this agent beyond your laptop, **this separation is the recommended pattern** — your code never sees a secret, and all credential policy lives in one place.
+
+> [!TIP]
+> **Deploying to Azure Container Apps?** Use the AI-assisted tutorial + skill at [`deploy/azure/container-apps/dev/README.md`](../../deploy/azure/container-apps/dev/README.md). It handles the switch from `ClientSecret` to `SignedAssertionFromManagedIdentity`, federated-credential wiring, and post-deploy manual steps — typically cutting a multi-hour manual deploy down to minutes.
 
 ---
 
@@ -304,7 +307,7 @@ The sidecar supports multiple credential types via `AzureAd__ClientCredentials__
 | SourceType | When to use |
 |---|---|
 | `ClientSecret` | **Local dev only** — what this sample ships with |
-| `SignedAssertionFromManagedIdentity` | **Production on Azure** — zero secrets, recommended |
+| `SignedAssertionFromManagedIdentity` | **Deployed on Azure** — zero secrets, recommended |
 | `KeyVault` | Certificate from Azure Key Vault |
 | `StoreWithThumbprint` | Certificate from local machine store |
 

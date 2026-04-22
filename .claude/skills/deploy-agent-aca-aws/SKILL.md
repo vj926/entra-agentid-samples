@@ -52,7 +52,7 @@ Before running any `az` command that provisions resources, confirm each SKU choi
 Ask the user to confirm: tenant ID, subscription ID, AWS account ID, AWS region. Then:
 
 ```bash
-cp .github/skills/deploy-agent-aca-aws/scripts/deploy-vars.sh.template /tmp/deploy-vars.sh
+cp .claude/skills/deploy-agent-aca-aws/scripts/deploy-vars.sh.template /tmp/deploy-vars.sh
 # edit /tmp/deploy-vars.sh with the confirmed values
 source /tmp/deploy-vars.sh
 az login --tenant "$TENANT_ID" && az account set --subscription "$SUBSCRIPTION_ID"
@@ -68,7 +68,7 @@ Delegate to [entra-agent-id-setup](../entra-agent-id-setup/SKILL.md). Capture `B
 Then configure the Blueprint for OBO using the ACA-compatible PowerShell script (the shipped `.sh` form uses a Graph filter that Agent Identity Blueprint types reject):
 
 ```bash
-pwsh -NoProfile -File .github/skills/deploy-agent-aca-aws/scripts/setup-obo-blueprint-for-aca.ps1 \
+pwsh -NoProfile -File .claude/skills/deploy-agent-aca-aws/scripts/setup-obo-blueprint-for-aca.ps1 \
   -BlueprintAppId "$BLUEPRINT_APP_ID" \
   -ClientSpaAppId "$CLIENT_SPA_APP_ID" \
   -AgentAppId "$AGENT_CLIENT_ID" \
@@ -86,8 +86,8 @@ Single Graph call — see tutorial [§7](../../../sidecar/aws/deploy-aws-bedrock
 ### Step 4 — Federate MI to AWS (chain B)
 
 ```bash
-bash .github/skills/deploy-agent-aca-aws/scripts/setup-intermediary-app.sh  # creates STS app, sets v1 tokens, adds FIC
-bash .github/skills/deploy-agent-aca-aws/scripts/setup-iam-role.sh          # OIDC provider + IAM role + Bedrock policy
+bash .claude/skills/deploy-agent-aca-aws/scripts/setup-intermediary-app.sh  # creates STS app, sets v1 tokens, adds FIC
+bash .claude/skills/deploy-agent-aca-aws/scripts/setup-iam-role.sh          # OIDC provider + IAM role + Bedrock policy
 ```
 
 Both scripts source `/tmp/deploy-vars.sh` and append `STS_APP_ID`, `STS_APP_URI`, `STS_SP_OID`, `AWS_ROLE_ARN`, `V1_OIDC_ARN`.
@@ -101,7 +101,7 @@ Tutorial [§9](../../../sidecar/aws/deploy-aws-bedrock-agent-sidecar-container-a
 ### Step 6 — Deploy the multi-container app
 
 ```bash
-envsubst < .github/skills/deploy-agent-aca-aws/scripts/containerapp.yaml.template > /tmp/containerapp.yaml
+envsubst < .claude/skills/deploy-agent-aca-aws/scripts/containerapp.yaml.template > /tmp/containerapp.yaml
 az containerapp update -g "$RG" -n "$APP_NAME" --yaml /tmp/containerapp.yaml
 ```
 
@@ -109,11 +109,11 @@ az containerapp update -g "$RG" -n "$APP_NAME" --yaml /tmp/containerapp.yaml
 
 Two things that cannot be done before deploy:
 
-1. **Add production SPA redirect URI** — `bash .github/skills/deploy-agent-aca-aws/scripts/add-spa-redirect-uri.sh`
+1. **Add deployed SPA redirect URI** — `bash .claude/skills/deploy-agent-aca-aws/scripts/add-spa-redirect-uri.sh`
 2. **Grant Agent → Graph delegated `User.Read` admin consent** (fixes `AADSTS65001` on OBO):
 
    ```bash
-   pwsh -NoProfile -File .github/skills/deploy-agent-aca-aws/scripts/grant-agent-obo-consent.ps1 \
+   pwsh -NoProfile -File .claude/skills/deploy-agent-aca-aws/scripts/grant-agent-obo-consent.ps1 \
      -AgentAppId "$AGENT_CLIENT_ID" -TenantId "$TENANT_ID"
    ```
 
@@ -128,7 +128,7 @@ Tutorial [§12](../../../sidecar/aws/deploy-aws-bedrock-agent-sidecar-container-
 If all prerequisites are in place and variables are confirmed, run:
 
 ```bash
-bash .github/skills/deploy-agent-aca-aws/scripts/deploy-aca-aws.sh
+bash .claude/skills/deploy-agent-aca-aws/scripts/deploy-aca-aws.sh
 ```
 
 This is idempotent and invokes steps 2–6 in order. Steps 0, 1, and 7 require human decisions and remain manual.

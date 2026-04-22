@@ -14,6 +14,10 @@ Runnable samples for **Microsoft Entra Agent ID** — Entra's purpose-built iden
 
 1. Provision Entra objects: [`scripts/README.md`](scripts/README.md)
 2. Run a local demo: [`sidecar/dev/README.md`](sidecar/dev/README.md)
+3. Deploy to Azure Container Apps: [`deploy/azure/container-apps/dev/README.md`](deploy/azure/container-apps/dev/README.md) (local-LLM) or [`deploy/azure/container-apps/aws/README.md`](deploy/azure/container-apps/aws/README.md) (AWS Bedrock)
+
+> [!TIP]
+> **Deploying to Azure is much faster with an AI assistant.** Each Azure deployment tutorial ships with a paired skill under [`.claude/skills/`](.claude/skills/) that works with **Claude Code** and **GitHub Copilot Chat**. The assistant walks through SKU choices, federation wiring, and post-deploy manual steps — typically cutting a multi-hour manual deploy down to minutes.
 
 ## Learn more
 

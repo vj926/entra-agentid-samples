@@ -1,6 +1,6 @@
 # SKU and sizing decisions
 
-Before provisioning any Azure resources, confirm each of these SKU choices with the user. Do **not** silently default to the cheapest tier. The defaults are fine for a one-shot demo but bite you on iteration, debugging, or production use.
+Before provisioning any Azure resources, confirm each of these SKU choices with the user. Do **not** silently default to the cheapest tier. The defaults are fine for a one-shot demo but bite you on iteration, debugging, or real workloads.
 
 Cost estimates are approximate USD/month (East US 2, April 2026) and assume `minReplicas = 1`.
 

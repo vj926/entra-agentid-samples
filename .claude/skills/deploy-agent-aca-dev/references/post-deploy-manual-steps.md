@@ -2,14 +2,14 @@
 
 Two steps cannot be completed before the Container App exists, and two cannot be done via `az ad app update`. Run them after Step 5 (deploy) in the main SKILL procedure.
 
-## 1. Add the production SPA redirect URI
+## 1. Add the deployed SPA redirect URI
 
-The Client SPA app was registered with only `http://localhost:3003`. The production `https://<APP_FQDN>` must be added, or the browser MSAL popup fails with `AADSTS50011`.
+The Client SPA app was registered with only `http://localhost:3003`. The deployed `https://<APP_FQDN>` must be added, or the browser MSAL popup fails with `AADSTS50011`.
 
 `az ad app update --web-redirect-uris` does NOT modify SPA URIs — you must PATCH Graph directly:
 
 ```bash
-bash .github/skills/deploy-agent-aca-dev/scripts/add-spa-redirect-uri.sh
+bash .claude/skills/deploy-agent-aca-dev/scripts/add-spa-redirect-uri.sh
 ```
 
 Idempotent — fetches existing `spa.redirectUris`, appends `https://$APP_FQDN`, PATCHes back.
@@ -33,7 +33,7 @@ AADSTS65001: The user or administrator has not consented to use the application
 ### Fix
 
 ```powershell
-pwsh -NoProfile -File .github/skills/deploy-agent-aca-dev/scripts/grant-agent-obo-consent.ps1 \
+pwsh -NoProfile -File .claude/skills/deploy-agent-aca-dev/scripts/grant-agent-obo-consent.ps1 \
   -AgentAppId "$AGENT_CLIENT_ID" -TenantId "$TENANT_ID"
 ```
 

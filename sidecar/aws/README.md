@@ -14,7 +14,7 @@ This sample deliberately uses the **official [Microsoft Entra SDK auth sidecar](
 
 - **Interoperable across any cloud or on-prem** — the same container image runs identically on Azure, AWS, GCP, Kubernetes, or a laptop. This sample puts it next to **AWS Bedrock** to make the cross-cloud story concrete: the LLM is in AWS, identity is in Microsoft Entra, and neither side cares.
 - **Your agent code stays decoupled from token exchanges.** The agent never handles `client_id`, `client_secret`, certificates, JWKS, token caching, or OBO exchange. It just asks the sidecar: *"Give me an authorization header for this downstream API."*
-- **Swap credentials without touching agent code.** `ClientSecret` for dev, `SignedAssertionFromManagedIdentity` for production on Azure — change one env var, no code changes.
+- **Swap credentials without touching agent code.** `ClientSecret` for dev, `SignedAssertionFromManagedIdentity` when deployed on Azure — change one env var, no code changes.
 - **Token caching, refresh, and expiry are handled for you.** No MSAL integration to debug.
 - **Security boundary is explicit.** The sidecar has no host port. Only services inside the Docker network can request tokens — your agent, not your browser, not random processes on the host.
 
@@ -36,7 +36,7 @@ This sample deliberately uses the **official [Microsoft Entra SDK auth sidecar](
 - **Full token lifecycle**: Tc (user token) → T1 (blueprint app token) → TR (agent token) → downstream API
 - **JWT validation end-to-end**: The weather API verifies signature (JWKS / RS256), issuer, and expiry on every request
 - **LangGraph ReAct agent**: Modern LangChain 1.x pattern with `langchain.agents.create_agent`
-- **Three production-ready AWS auth tiers** documented: temporary STS creds, Bedrock API keys, and OIDC federation (no secrets) — see [§5](#5-aws-authentication--pick-the-right-tier)
+- **Three deployment-ready AWS auth tiers** documented: temporary STS creds, Bedrock API keys, and OIDC federation (no secrets) — see [§5](#5-aws-authentication--pick-the-right-tier)
 
 ### Modes and flows (2×2 matrix)
 
@@ -172,9 +172,9 @@ The sample supports three ways to authenticate to Bedrock. Pick based on where y
 |---|---|---|---|---|
 | **A. Temporary STS creds** | Local dev, your laptop, your AWS SSO | `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` + `AWS_SESSION_TOKEN` in `.env` | ~1 hour | Yes (in gitignored `.env`) |
 | **B. Bedrock API key** | Public demos, workshops, hands-on labs | `AWS_BEARER_TOKEN_BEDROCK` in `.env` | Long- or short-term, scoped to Bedrock only | Yes (in gitignored `.env`) |
-| **C. OIDC federation** | **Production on Azure App Service** | Platform App Settings (no `.env`); `AWS_ROLE_ARN` + `AWS_WEB_IDENTITY_TOKEN_FILE` | Auto-rotated by AWS STS | **No** — zero stored secrets |
+| **C. OIDC federation** | **Deployed on Azure App Service** | Platform App Settings (no `.env`); `AWS_ROLE_ARN` + `AWS_WEB_IDENTITY_TOKEN_FILE` | Auto-rotated by AWS STS | **No** — zero stored secrets |
 
-> **Production deployment instructions:** see **[`DEPLOY-AZURE-APP-SERVICE.md`](./DEPLOY-AZURE-APP-SERVICE.md)** for the full step-by-step guide using tier (C) — Azure Managed Identity → AWS IAM role via OIDC federation, with no AWS keys ever stored anywhere.
+> **For hosted deployments:** see **[`DEPLOY-AZURE-APP-SERVICE.md`](./DEPLOY-AZURE-APP-SERVICE.md)** for the full step-by-step guide using tier (C) — Azure Managed Identity → AWS IAM role via OIDC federation, with no AWS keys ever stored anywhere.
 
 `.env.example` documents all three tiers with side-by-side examples.
 
@@ -345,7 +345,7 @@ The sidecar supports multiple credential types via `AzureAd__ClientCredentials__
 | SourceType | When to use |
 |---|---|
 | `ClientSecret` | **Local dev only** — what this sample ships with |
-| `SignedAssertionFromManagedIdentity` | **Production on Azure** — zero secrets, recommended (see [`DEPLOY-AZURE-APP-SERVICE.md`](./DEPLOY-AZURE-APP-SERVICE.md)) |
+| `SignedAssertionFromManagedIdentity` | **Deployed on Azure** — zero secrets, recommended (see [`DEPLOY-AZURE-APP-SERVICE.md`](./DEPLOY-AZURE-APP-SERVICE.md)) |
 | `KeyVault` | Certificate from Azure Key Vault |
 | `StoreWithThumbprint` | Certificate from local machine store |
 
@@ -419,11 +419,14 @@ Override via `BEDROCK_MODEL_ID` in `.env`. You must enable each model in the **A
 
 ---
 
-## 12. Production deployment
+## 12. Deploying on Azure
 
-The dev workflow above puts secrets in `.env`. **Do not deploy that to production.** For Azure App Service, follow the dedicated guide:
+The dev workflow above puts secrets in `.env`. **Don't ship that to a hosted environment.** For Azure App Service, follow the dedicated guide:
 
 **→ [`DEPLOY-AZURE-APP-SERVICE.md`](./DEPLOY-AZURE-APP-SERVICE.md)**
+
+> [!TIP]
+> **For Azure Container Apps**, there's an AI-assisted tutorial + skill at [`deploy/azure/container-apps/aws/README.md`](../../deploy/azure/container-apps/aws/README.md) that handles the v1 token exchange, intermediary app, and post-deploy wiring for you. It typically cuts a multi-hour manual deploy down to minutes.
 
 It walks through, step by step:
 
@@ -482,7 +485,7 @@ sidecar/aws/
 ├── Dockerfile                        # Python 3.11 slim base
 ├── requirements.txt                  # LangChain 1.x, langchain-aws, Flask, MSAL
 ├── .env.example                      # Template — copy to .env (3 AWS auth tiers documented)
-├── DEPLOY-AZURE-APP-SERVICE.md       # Production deployment with OIDC federation
+├── DEPLOY-AZURE-APP-SERVICE.md       # Azure App Service deployment with OIDC federation
 ├── templates/
 │   └── index.html                    # Chat UI, MSAL.js, identity trace panel
 └── tests/

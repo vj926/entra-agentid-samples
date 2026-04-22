@@ -9,6 +9,9 @@ For runnable samples, see:
 
 For the PowerShell bootstrap that creates the Entra objects used by every sample, see [`../scripts/README.md`](../scripts/README.md).
 
+> [!TIP]
+> **Deploying these samples to Azure?** Use the AI-assisted skills for a faster, less error-prone path than running every command by hand: [`deploy-agent-aca-dev`](../.claude/skills/deploy-agent-aca-dev/SKILL.md) (local-LLM on ACA) and [`deploy-agent-aca-aws`](../.claude/skills/deploy-agent-aca-aws/SKILL.md) (AWS Bedrock on ACA). Each skill works with Claude Code and GitHub Copilot Chat and typically cuts a multi-hour manual deploy down to minutes.
+
 ## The problem
 
 Two common approaches to agent authentication both fall short:
@@ -26,7 +29,7 @@ The **[Microsoft Entra SDK auth sidecar](https://mcr.microsoft.com/en-us/product
 - Client-credentials or federated identity credential (FIC) token acquisition for the Agent Identity (autonomous flow)
 - On-Behalf-Of (OBO) flows for user-context calls
 - Token caching, refresh, and expiry
-- Credential source abstraction — `ClientSecret` for dev, `SignedAssertionFromManagedIdentity` for production, same API
+- Credential source abstraction — `ClientSecret` for dev, `SignedAssertionFromManagedIdentity` for Azure deployments, same API
 
 Your agent asks the sidecar *"give me an authorization header for this API"* and gets back `Bearer eyJ…`. Credentials never live in agent memory.
 
@@ -57,7 +60,7 @@ Provisioning is covered in [`../scripts/README.md`](../scripts/README.md) — th
 - How the sidecar exposes `/AuthorizationHeader` (get token) and `/DownstreamApi` (token + proxied call) endpoints.
 - How to forward a signed-in user's token to the agent and have the Microsoft Entra SDK for Agent ID mint an agent-on-behalf-of-user token via OBO.
 - How the downstream API validates agent tokens cryptographically — signature, issuer, `xms_par_app_azp`, audience.
-- How to swap from `ClientSecret` (dev) to `SignedAssertionFromManagedIdentity` (Azure production) without changing a line of agent code.
+- How to swap from `ClientSecret` (dev) to `SignedAssertionFromManagedIdentity` (Azure deployments) without changing a line of agent code.
 
 ## Next steps
 
