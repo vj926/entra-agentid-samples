@@ -27,9 +27,20 @@ End-to-end, secretless deployment of the AWS sample agent (`sidecar/aws`) to Azu
 
 1. **Entra role** on signing-in user — one of: `Global Administrator`, `Agent ID Administrator`, `Agent ID Developer`. `Application Administrator` alone returns 403 on blueprint creation. See [entra-agent-id-setup](../entra-agent-id-setup/SKILL.md).
 2. **AWS Bedrock access** enabled for `anthropic.claude-3-haiku-20240307-v1:0` in the target region (request via Bedrock console if needed).
-3. **Tooling**: `az` ≥ 2.60, `aws` v2, `pwsh` 7.4+, `Microsoft.Graph.*` 2.35+, `docker buildx` for `linux/amd64`.
-4. **Tenant-confirmed preflight** — ALWAYS confirm tenant ID + subscription ID with the user before any `az` command that mutates resources (user has multiple accounts; see user memory).
-5. **Entra Agent ID base objects** exist — Blueprint, Agent Identity, Client SPA. If not, run the [entra-agent-id-setup](../entra-agent-id-setup/SKILL.md) skill first.
+3. **Bedrock pre-flight** — run a real `invoke-model` call **before** provisioning anything. Confirms access + region + credentials in 30 seconds. Most late-stage failures in this skill come from skipping this.
+
+   ```bash
+   aws bedrock-runtime invoke-model \
+     --region "$AWS_REGION" --model-id "$BEDROCK_MODEL_ID" \
+     --body '{"anthropic_version":"bedrock-2023-05-31","max_tokens":10,"messages":[{"role":"user","content":"hi"}]}' \
+     --cli-binary-format raw-in-base64-out /tmp/bedrock-preflight.json \
+     && echo "✅ ok" || echo "❌ fix access/region before deploying"
+   ```
+
+   If it fails, stop and fix before continuing. Common causes: model access not granted (console → Model access), wrong region for the inference profile (`us.` IDs require `us-east-1` / `us-east-2` / `us-west-2`), expired AWS creds. Full error table: [deploy/azure/container-apps/aws/README.md §2.2.1](../../../deploy/azure/container-apps/aws/README.md#221-pre-flight-verify-bedrock-access-before-deploying).
+4. **Tooling**: `az` ≥ 2.60, `aws` v2, `pwsh` 7.4+, `Microsoft.Graph.*` 2.35+, `docker buildx` for `linux/amd64`.
+5. **Tenant-confirmed preflight** — ALWAYS confirm tenant ID + subscription ID with the user before any `az` command that mutates resources (user has multiple accounts; see user memory).
+6. **Entra Agent ID base objects** exist — Blueprint, Agent Identity, Client SPA. If not, run the [entra-agent-id-setup](../entra-agent-id-setup/SKILL.md) skill first.
 
 ## SKU decisions — ask the user first
 
