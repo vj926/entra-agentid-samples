@@ -22,6 +22,7 @@ microsoft/entra-agentid-samples/
 │   └── CODEOWNERS
 │
 ├── scripts/
+│   ├── README.md                          ← PowerShell bootstrap walkthrough (ties to §1.2)
 │   └── EntraAgentID-Functions.ps1         ← Shared PowerShell tooling
 │
 ├── sidecar/                               ← SIDECAR PATTERN (container-based)
@@ -76,6 +77,10 @@ microsoft/entra-agentid-samples/
     │   │   ├── docker-compose.app-service.yml
     │   │   ├── infra/app-service.bicep
     │   │   └── deploy.sh
+    │   │
+    │   ├── container-apps/                ← Azure Container Apps (zero-secret, federated)
+    │   │   ├── aws/README.md              ← AWS Bedrock agent + sidecar on ACA
+    │   │   └── dev/README.md              ← Local-LLM (Ollama) agent + sidecar on ACA
     │   │
     │   └── aks/                           ← AKS + Workload Identity
     │       ├── README.md
@@ -134,6 +139,7 @@ microsoft/entra-agentid-samples/
 |---|---|---|
 | 4.1 | Deploy to Azure App Service | Razi ([@razi-rais](https://github.com/razi-rais)) |
 | 4.2 | Deploy to Azure Kubernetes Service with Workload Identity | Yoel ([@yoelhor](https://github.com/yoelhor)) |
+| 4.3 | Deploy to Azure Container Apps | Razi ([@razi-rais](https://github.com/razi-rais)) |
 
 ---
 
