@@ -28,7 +28,7 @@
 
 **Symptom**: Blueprint secret rejected shortly after creation.
 
-**Cause**: Azure AD propagation delay (~30 s).
+**Cause**: Microsoft Entra ID propagation delay (~30 s).
 
 **Fix**: `New-AgentIdentityBlueprint` already retries up to 10×3s. If still failing, wait 60s and retry the workflow.
 
@@ -70,3 +70,23 @@ Use `Get-DecodedJwtToken -Token $tr` to inspect.
 **Cause**: Microsoft publishes `linux/amd64` only. Docker runs it under Rosetta.
 
 **Fix**: Harmless — the sidecar runs correctly under emulation.
+
+## `Connect-MgGraph` times out in `pwsh -Command` subshell
+
+**Symptom**: `Connect-MgGraph: InteractiveBrowserCredential authentication failed: User canceled authentication.` when run via `pwsh -Command "Connect-MgGraph ..."` subshell.
+
+**Cause**: WAM authentication popup opens behind other windows in a subshell and the user never sees it, so it times out.
+
+**Fix**: Run `Connect-MgGraph` in an **interactive** `pwsh` session. Do not wrap it in `pwsh -Command "..."` or `pwsh -c "..."`.
+
+## Missing Graph scopes from `Start-EntraAgentIDWorkflow`
+
+**Symptom**: `WARNING: Missing required scopes: AgentIdentityBlueprint.DeleteRestore.All, AgentIdentity.DeleteRestore.All` followed by `throw "Missing required Microsoft Graph scopes."`.
+
+**Cause**: `EntraAgentID-Functions.ps1` validates 10 scopes internally. If you connected with only the 8 scopes from an older version of this skill, the two `DeleteRestore` scopes are missing.
+
+**Fix**: Disconnect and reconnect with all 10 scopes:
+```powershell
+Disconnect-MgGraph
+Connect-MgGraph -Scopes "AgentIdentityBlueprint.AddRemoveCreds.All","AgentIdentityBlueprint.Create","AgentIdentityBlueprint.DeleteRestore.All","AgentIdentity.DeleteRestore.All","DelegatedPermissionGrant.ReadWrite.All","Application.Read.All","AgentIdentityBlueprintPrincipal.Create","AppRoleAssignment.ReadWrite.All","Directory.Read.All","User.Read" -TenantId <tenant-id>
+```

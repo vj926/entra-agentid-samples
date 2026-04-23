@@ -8,6 +8,19 @@ set -euo pipefail
 : "${ACR_NAME:?}"
 : "${OLLAMA_MODEL:?}"
 
+# The baked strategy requires a local Docker daemon — ollama serve must run during
+# the build to pull the model. az acr build CANNOT do this (daemon silently fails).
+if ! docker info >/dev/null 2>&1; then
+  echo "ERROR: Docker daemon is not running. The baked Ollama strategy requires a local" >&2
+  echo "Docker build (docker buildx). az acr build cannot run 'ollama serve' during build." >&2
+  echo "" >&2
+  echo "Options:" >&2
+  echo "  1. Start Docker Desktop and re-run this script" >&2
+  echo "  2. Switch to runtime-pull strategy: set OLLAMA_IMAGE_STRATEGY=runtime-pull" >&2
+  echo "     and use OLLAMA_IMAGE=docker.io/ollama/ollama:latest (model pulls on first request)" >&2
+  exit 1
+fi
+
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 REPO_ROOT="$( cd "$SCRIPT_DIR/../../../.." && pwd )"
 BUILD_DIR="$REPO_ROOT/sidecar/dev/ollama"

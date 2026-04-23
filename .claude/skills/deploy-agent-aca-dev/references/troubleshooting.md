@@ -35,3 +35,16 @@ az containerapp logs show -g "$RG" -n "$APP_NAME" --container ollama --tail 50
 # Tail sidecar logs (for Entra auth errors)
 az containerapp logs show -g "$RG" -n "$APP_NAME" --container sidecar --tail 50
 ```
+
+## Additional issues (from field testing)
+
+| Symptom | Root cause | Fix |
+|---|---|---|
+| Baked Ollama image silently fails to appear in ACR after `az acr build` | ACR Build cannot run `ollama serve` during Docker build — daemon silently fails | Use local `docker buildx build --push` (requires Docker Desktop), or switch to `runtime-pull` strategy |
+| `Connect-MgGraph` times out or `User canceled authentication` from `pwsh -Command` subshell | WAM authentication popup hidden behind other windows in subshell | Run `Connect-MgGraph` in an interactive `pwsh` session, not via `pwsh -Command "..."` |
+| `WARNING: Missing required scopes: AgentIdentityBlueprint.DeleteRestore.All, AgentIdentity.DeleteRestore.All` | Skill’s `Connect-MgGraph` example listed 8 scopes but `EntraAgentID-Functions.ps1` validates 10 | Reconnect with all 10 scopes — see `entra-agent-id-setup/SKILL.md` Step 1 |
+| `Property spa in payload has a value that does not match schema` from `az ad app update --set spa='{...}'` | PowerShell JSON escaping mangles the payload | Use `az rest --method PATCH --url "https://graph.microsoft.com/v1.0/applications(appId='$CLIENT_SPA_APP_ID')"` with PowerShell-native JSON |
+| `UnicodeEncodeError: 'charmap' codec can't encode characters` from `az acr build` on Windows | colorama/cp1252 encoding mismatch | Cosmetic — ignore. The build succeeds. |
+| Dedicated-D4 workload profile takes 20+ minutes to provision | Normal Azure provisioning time for dedicated profiles | Wait. Do not cancel. |
+| `az group create` denied by Azure Policy (e.g., `SFI-W18-Require Owner tag`) | Org policy requires tags on resource groups | Add required tags: `az group create ... --tags Owner=<you> MonthlyCost=<est>`, or use a pre-existing RG |
+| Ollama container OOMs or performs poorly on 3b model with 1.5 Gi | Model needs more memory than allocated | Set `OLLAMA_MEMORY=2.5Gi` and `OLLAMA_CPU=1.0` for `qwen2.5:3b`. Requires Dedicated-D4+ (exceeds Consumption 4 Gi limit). See [sku-sizing.md §7](./sku-sizing.md). |

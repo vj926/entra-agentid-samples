@@ -51,7 +51,7 @@ properties:
           - { name: VALIDATE_TOKEN_SIGNATURE, value: "true" }
       - name: ollama
         image: ${OLLAMA_IMAGE}
-        resources: { cpu: 0.75, memory: 1.5Gi }
+        resources: { cpu: ${OLLAMA_CPU}, memory: ${OLLAMA_MEMORY} }
         env:
           - { name: OLLAMA_HOST, value: "0.0.0.0:11434" }
     scale:

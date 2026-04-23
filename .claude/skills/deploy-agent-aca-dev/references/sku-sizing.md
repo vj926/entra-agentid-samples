@@ -71,10 +71,16 @@ Cost estimates are approximate USD/month (East US 2, April 2026) and assume `min
 
 ## 7. Container CPU/memory per replica
 
-The tutorial uses total **1.75 vCPU / 3.5 Gi** across four containers (llm-agent 0.5/1, sidecar 0.25/0.5, weather-api 0.25/0.5, ollama 0.75/1.5). Must match a valid ACA consumption combination.
+The fixed containers use: llm-agent 0.5/1Gi, sidecar 0.25/0.5Gi, weather-api 0.25/0.5Gi (total fixed: **1.0 vCPU / 2.0 Gi**). Ollama is parameterized via `OLLAMA_CPU` and `OLLAMA_MEMORY` — choose based on model:
+
+| Model | `OLLAMA_CPU` | `OLLAMA_MEMORY` | Total (4 containers) | Minimum workload profile |
+|---|---|---|---|---|
+| `qwen2.5:1.5b` / `llama3.2:1b` | `0.75` | `1.5Gi` | 1.75 vCPU / 3.5 Gi | Consumption |
+| `qwen2.5:3b` | `1.0` | `2.5Gi` | 2.0 vCPU / 5.0 Gi | **Dedicated-D4** (exceeds Consumption 4 Gi limit) |
+| `qwen2.5:7b` | `2.0` | `6Gi` | 3.0 vCPU / 8.5 Gi | **Dedicated-D4+** or GPU |
 
 > **[!WARNING] Silent failure mode**
-> If you upsize Ollama to 2 Gi for a 3B model without recomputing totals, the manifest will be rejected at deploy time. Check against [ACA resource allocation](https://learn.microsoft.com/en-us/azure/container-apps/containers).
+> If the total memory exceeds the workload profile limit, the manifest will be rejected at deploy time. `qwen2.5:3b` and larger **cannot run on Consumption** — they require Dedicated-D4 or higher. Check against [ACA resource allocation](https://learn.microsoft.com/en-us/azure/container-apps/containers).
 
 ## Recommended demo defaults (what the orchestrator enforces)
 
@@ -87,5 +93,7 @@ The tutorial uses total **1.75 vCPU / 3.5 Gi** across four containers (llm-agent
 | `MAX_REPLICAS` | `1` |
 | `OLLAMA_MODEL` | `qwen2.5:1.5b` |
 | `OLLAMA_IMAGE_STRATEGY` | `baked` |
+| `OLLAMA_CPU` | `0.75` |
+| `OLLAMA_MEMORY` | `1.5Gi` |
 
 The orchestrator **requires all of these to be set explicitly** — it fails with a clear error if any is missing, so AI agents don't silently pick defaults.

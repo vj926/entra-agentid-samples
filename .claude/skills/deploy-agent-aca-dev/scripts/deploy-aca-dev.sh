@@ -21,7 +21,7 @@ VARS_FILE="${VARS_FILE:-/tmp/deploy-vars.sh}"
 # Required before we start — including ALL SKU vars (fail hard if missing).
 for var in TENANT_ID SUBSCRIPTION_ID RG LOCATION ACR_NAME APP_NAME \
            ACR_SKU ACA_WORKLOAD_PROFILE LOGS_DESTINATION MIN_REPLICAS MAX_REPLICAS \
-           OLLAMA_MODEL OLLAMA_IMAGE_STRATEGY \
+           OLLAMA_MODEL OLLAMA_IMAGE_STRATEGY OLLAMA_CPU OLLAMA_MEMORY \
            BLUEPRINT_APP_ID AGENT_CLIENT_ID CLIENT_SPA_APP_ID; do
   if [[ -z "${!var:-}" ]]; then
     echo "ERROR: \$$var is not set. Source $VARS_FILE first (see deploy-vars.sh.template)." >&2
@@ -51,6 +51,7 @@ echo "   Workload:      $ACA_WORKLOAD_PROFILE"
 echo "   Logs:          $LOGS_DESTINATION"
 echo "   Replicas:      min=$MIN_REPLICAS max=$MAX_REPLICAS"
 echo "   Ollama model:  $OLLAMA_MODEL  (strategy: $OLLAMA_IMAGE_STRATEGY)"
+echo "   Ollama sizing: $OLLAMA_CPU vCPU / $OLLAMA_MEMORY"
 echo "================================================================"
 
 ### Step 2 — Azure infrastructure + container app skeleton ###

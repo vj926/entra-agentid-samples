@@ -38,7 +38,7 @@ End-to-end, secretless deployment of the AWS sample agent (`sidecar/aws`) to Azu
    ```
 
    If it fails, stop and fix before continuing. Common causes: model access not granted (console → Model access), wrong region for the inference profile (`us.` IDs require `us-east-1` / `us-east-2` / `us-west-2`), expired AWS creds. Full error table: [deploy/azure/container-apps/aws/README.md §2.2.1](../../../deploy/azure/container-apps/aws/README.md#221-pre-flight-verify-bedrock-access-before-deploying).
-4. **Tooling**: `az` ≥ 2.60, `aws` v2, `pwsh` 7.4+, `Microsoft.Graph.*` 2.35+, `docker buildx` for `linux/amd64`.
+4. **Tooling**: `az` ≥ 2.60, `aws` v2, `pwsh` 7.4+, `Microsoft.Graph.*` 2.35+, and one of: `docker buildx` for `linux/amd64` **OR** `az acr build` (no local Docker needed).
 5. **Tenant-confirmed preflight** — ALWAYS confirm tenant ID + subscription ID with the user before any `az` command that mutates resources (user has multiple accounts; see user memory).
 6. **Entra Agent ID base objects** exist — Blueprint, Agent Identity, Client SPA. If not, run the [entra-agent-id-setup](../entra-agent-id-setup/SKILL.md) skill first.
 

@@ -34,3 +34,13 @@ az rest --method GET --url "https://graph.microsoft.com/v1.0/applications(appId=
 # Verify Blueprint federated credential subject
 az rest --method GET --url "https://graph.microsoft.com/beta/applications(appId='$BLUEPRINT_APP_ID')/federatedIdentityCredentials"
 ```
+
+## Additional issues (from field testing)
+
+| Symptom | Root cause | Fix |
+|---|---|---|
+| `Connect-MgGraph` times out or `User canceled authentication` from `pwsh -Command` subshell | WAM popup hidden behind windows in subshell | Run `Connect-MgGraph` in an interactive `pwsh` session |
+| `WARNING: Missing required scopes` from `EntraAgentID-Functions.ps1` | Skill’s scope list missing `AgentIdentityBlueprint.DeleteRestore.All` and `AgentIdentity.DeleteRestore.All` | Reconnect with all 10 scopes — see `entra-agent-id-setup/SKILL.md` |
+| `Property spa in payload has a value that does not match schema` on PowerShell | JSON escaping in `az ad app update --set spa='{...}'` | Use `az rest --method PATCH` with PowerShell-native JSON serialization |
+| Dedicated-D4 workload profile takes 20+ minutes | Normal Azure provisioning time | Wait. Do not cancel. |
+| `az group create` denied by Azure Policy tag requirements | Org policy requires tags on RGs | Add required tags during `az group create` or use pre-existing RG |

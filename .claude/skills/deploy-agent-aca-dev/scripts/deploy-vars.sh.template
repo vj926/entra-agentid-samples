@@ -40,6 +40,14 @@ export MAX_REPLICAS="1"
 #        llama3.2:1b (fastest) | phi3:mini (MS-native)
 export OLLAMA_MODEL="qwen2.5:1.5b"
 
+# Ollama container CPU/memory — MUST match the model choice.
+# The totals across all 4 containers must be a valid ACA consumption combo.
+#   qwen2.5:1.5b / llama3.2:1b  → OLLAMA_CPU=0.75  OLLAMA_MEMORY=1.5Gi  (total: 1.75 vCPU / 3.5 Gi — valid on Consumption)
+#   qwen2.5:3b                  → OLLAMA_CPU=1.0   OLLAMA_MEMORY=2.5Gi  (total: 2.0 vCPU / 5.0 Gi — requires Dedicated-D4+)
+#   qwen2.5:7b                  → OLLAMA_CPU=2.0   OLLAMA_MEMORY=6Gi    (total: 3.0 vCPU / 8.5 Gi — requires Dedicated-D4+ or GPU)
+export OLLAMA_CPU="0.75"
+export OLLAMA_MEMORY="1.5Gi"
+
 # Image strategy: baked (model layered into image, no first-request delay)
 #                 runtime-pull (smaller image, ~30 s hang on first request)
 export OLLAMA_IMAGE_STRATEGY="baked"
