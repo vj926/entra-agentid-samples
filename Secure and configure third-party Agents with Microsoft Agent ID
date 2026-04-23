@@ -1,4 +1,4 @@
-# Agent ID Implementation Guide: Samples, Prompts, and Best Practices
+# Secure and configure third-party Agents with Microsoft Agent ID
 
 This guide provides hands-on implementation guidance for Microsoft Entra Agent ID, including code samples, PowerShell scripts, and best practices for creating and managing agent identities at scale.
 
