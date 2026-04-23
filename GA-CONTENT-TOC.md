@@ -102,7 +102,8 @@ microsoft/entra-agentid-samples/
 
 | # | Title | Owner |
 |---|---|---|
-| 3.1 | AWS: Amazon Bedrock Agent with Entra Agent ID Sidecar | Razi ([@razi-rais](https://github.com/rbinrais)) |(Done open for review)
+| 3.1 | AWS: Amazon Bedrock Agent with Entra Agent ID Sidecar | Razi ([@razi-rais](https://github.com/rbinrais)) |
+https://github.com/microsoft/entra-agentid-samples/blob/dev/sidecar/aws/README.md (Done open for review)
 
 **Federation Pattern** (`federation/`)
 
