@@ -6,7 +6,7 @@ ms.topic: overview
 ms.date: 2026-04-23
 author: GargiSinha
 ms.author: gargi.sinha
-manager: amycolville
+manager: sharonsandhu
 ---
 
 # Configure third-party agents with Microsoft Entra SDKs
@@ -199,6 +199,11 @@ You're developing locally with a local LLM (Ollama). Use the sidecar pattern:
 - **Azure subscription** (for some deployment options)
 - **Docker** and **Docker Compose** (for sidecar pattern)
 - **Credentials or federation setup** (depends on pattern)
+- Before starting the implementation, ensure you have:
+
+- **PowerShell 7.5 or later** with Microsoft.Graph PowerShell module
+- **Global Administrator** or **Application Administrator** role
+- **Microsoft Graph permissions** for agent management operations
 
 Before you begin:
 
