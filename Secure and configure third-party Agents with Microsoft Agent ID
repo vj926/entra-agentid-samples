@@ -1,4 +1,4 @@
-# Configure third-party Agents with Microsoft Entra SDK Agent ID
+# Configure third-party Agents with Microsoft Entra SDK 
 
 This guide provides hands-on implementation guidance for Microsoft Entra Agent ID, including code samples, PowerShell scripts, and best practices for creating and managing agent identities at scale.
 
