@@ -84,14 +84,14 @@ microsoft/entra-agentid-samples/
 
 ### Section 1 — Getting Started
 
-| # | Title | Owner |
-|---|---|---|
+| # | Title | Owner |Status|
+|---|---|---|---|
 | 1.1 | Prerequisites and Environment Setup | Gargi ([@Gargi-Sinha](https://github.com/Gargi-Sinha)) | Need to complete 
 
 ### Section 2 — Sidecar
 
-| # | Title | Owner |
-|---|---|---|
+| # | Title | Owner |Status|
+|---|---|---|---|
 | 2.1 | The Sidecar Design Pattern | Razi ([@razi-rais](https://github.com/rbinrais)) |(Done open for review)
 | 2.2 | End-to-End Token Flow: Agent to Weather API | Razi ([@razi-rais](https://github.com/rbinrais)) | (Done open for review)
 | 2.3 | Run the Sidecar Locally — Developer Quickstart | Razi ([@razi-rais](https://github.com/rbinrais)) |(Done open for review)
@@ -100,28 +100,28 @@ microsoft/entra-agentid-samples/
 
 **Sidecar Pattern** (`sidecar/`)
 
-| # | Title | Owner |
-|---|---|---|
+| # | Title | Owner |Status|
+|---|---|---|--|
 | 3.1 | AWS: Amazon Bedrock Agent with Entra Agent ID Sidecar | Razi ([@razi-rais](https://github.com/rbinrais)) |
 https://github.com/microsoft/entra-agentid-samples/blob/dev/sidecar/aws/README.md (Done open for review)
 
 **Federation Pattern** (`federation/`)
 
-| # | Title | Owner |
-|---|---|---|
+| # | Title | Owner |Status|
+|---|---|---|---|
 | 3.3 | GCP: Workload Identity Federation with Entra Agent ID | Arturo ([@ArLucaID](https://github.com/ArLucaID)) |(In-progress)
 | 3.4 | *(Future) AWS: Identity Federation with Entra Agent ID* | Arturo ([@ArLucaID](https://github.com/ArLucaID)) |(In-progress)
 
 **Low-Code** (`n8n/`)
 
-| # | Title | Owner |
-|---|---|---|
+| # | Title | Owner |Status|
+|---|---|---|---|
 | 3.5 | N8N: Low-Code Agent with Entra Agent ID | Anton ([@astaykov](https://github.com/astaykov)) |(In-progress)
 
 ### Section 4 — Deploy
 
-| # | Title | Owner |
-|---|---|---|
+| # | Title | Owner |Status|
+|---|---|---|---|
 | 4.1 | Deploy to Azure App Service | Vijaya ([@Vijaya] / Razi(rbinrais)  |(In-progress)
 | 4.2 | Deploy to Azure Container Apps | Razi ([@razi-rais](https://github.com/rbinrais)) |(Done open for review)
 
