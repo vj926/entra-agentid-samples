@@ -100,16 +100,15 @@ microsoft/entra-agentid-samples/
 
 | # | Title | Owner |
 |---|---|---|
-| 1.1 | Entra Agent ID: Architecture and Patterns | Anton ([@astaykov](https://github.com/astaykov)) |
-| 1.2 | Prerequisites and Environment Setup | Gargi ([@Gargi-Sinha](https://github.com/Gargi-Sinha)) |
+| 1.1 | Prerequisites and Environment Setup | Gargi ([@Gargi-Sinha](https://github.com/Gargi-Sinha)) | Need to complete 
 
 ### Section 2 — Sidecar
 
 | # | Title | Owner |
 |---|---|---|
-| 2.1 | The Sidecar Design Pattern | Razi ([@razi-rais](https://github.com/razi-rais)) / Yoel ([@yoelhor](https://github.com/yoelhor)) |
-| 2.2 | End-to-End Token Flow: Agent to Weather API | Razi ([@razi-rais](https://github.com/razi-rais)) |
-| 2.3 | Run the Sidecar Locally — Developer Quickstart | Razi ([@razi-rais](https://github.com/razi-rais)) |
+| 2.1 | The Sidecar Design Pattern | Razi ([@razi-rais](https://github.com/rbinrais)) |(Done open for review)
+| 2.2 | End-to-End Token Flow: Agent to Weather API | Razi ([@razi-rais](https://github.com/rbinrais)) | (Done open for review)
+| 2.3 | Run the Sidecar Locally — Developer Quickstart | Razi ([@razi-rais](https://github.com/rbinrais)) |(Done open for review)
 
 ### Section 3 — Third-Party Agent Platforms
 
@@ -117,31 +116,39 @@ microsoft/entra-agentid-samples/
 
 | # | Title | Owner |
 |---|---|---|
-| 3.1 | AWS: Amazon Bedrock Agent with Entra Agent ID Sidecar | Razi ([@razi-rais](https://github.com/razi-rais)) |
-| 3.2 | GCP: Vertex AI (Gemini) Agent with Entra Agent ID Sidecar | Razi ([@razi-rais](https://github.com/razi-rais)) |
+| 3.1 | AWS: Amazon Bedrock Agent with Entra Agent ID Sidecar | Razi ([@razi-rais](https://github.com/rbinrais)) |(Done open for review)
 
 **Federation Pattern** (`federation/`)
 
 | # | Title | Owner |
 |---|---|---|
-| 3.3 | GCP: Workload Identity Federation with Entra Agent ID | Arturo ([@ArLucaID](https://github.com/ArLucaID)) |
-| 3.4 | *(Future) AWS: Identity Federation with Entra Agent ID* | Arturo ([@ArLucaID](https://github.com/ArLucaID)) |
+| 3.3 | GCP: Workload Identity Federation with Entra Agent ID | Arturo ([@ArLucaID](https://github.com/ArLucaID)) |(In-progress)
+| 3.4 | *(Future) AWS: Identity Federation with Entra Agent ID* | Arturo ([@ArLucaID](https://github.com/ArLucaID)) |(In-progress)
 
 **Low-Code** (`n8n/`)
 
 | # | Title | Owner |
 |---|---|---|
-| 3.5 | N8N: Low-Code Agent with Entra Agent ID | Anton ([@astaykov](https://github.com/astaykov)) |
+| 3.5 | N8N: Low-Code Agent with Entra Agent ID | Anton ([@astaykov](https://github.com/astaykov)) |(In-progress)
 
 ### Section 4 — Deploy
 
 | # | Title | Owner |
 |---|---|---|
-| 4.1 | Deploy to Azure App Service | Razi ([@razi-rais](https://github.com/razi-rais)) |
-| 4.2 | Deploy to Azure Kubernetes Service with Workload Identity | Yoel ([@yoelhor](https://github.com/yoelhor)) |
-| 4.3 | Deploy to Azure Container Apps | Razi ([@razi-rais](https://github.com/razi-rais)) |
+| 4.1 | Deploy to Azure App Service | Vijaya ([@Vijaya] / Razi(rbinrais)  |(In-progress)
+| 4.2 | Deploy to Azure Container Apps | Razi ([@razi-rais](https://github.com/rbinrais)) |(Done open for review)
+
+Reminder to updae the AI skills and make sure its reflecting in the repo. 
 
 ---
+
+PHASE 2 
+
+Deploy - 
+| 4.2 | Deploy to Azure Kubernetes Service with Workload Identity | ([@yoelhor](https://github.com/yoelhor)) | Pushed because of no activity 
+| 3.2 | GCP: Vertex AI (Gemini) Agent with Entra Agent ID Sidecar | Razi ([@razi-rais](https://github.com/rbinrais)) |
+| 1.1 | Entra Agent ID: Architecture and Patterns | Anton ([@astaykov](https://github.com/astaykov)) |Anton mentioned this is done and in the GA PR repo already. 
+
 
 ## Migration Plan
 
