@@ -51,14 +51,7 @@ microsoft/entra-agentid-samples/
 │   │   ├── docs/
 │   │   └── README.md
 │   │
-│   └── gcp/                               ← Google Vertex AI edition
-│       ├── app.py
-│       ├── Dockerfile
-│       ├── docker-compose.yml
-│       ├── requirements.txt
-│       ├── docs/
-│       └── README.md
-│
+│   
 ├── federation/                            ← FEDERATION PATTERN (token exchange via FIC)
 │   ├── README.md                          ← Federation pattern overview
 │   ├── gcp/                               ← GCP Workload Identity → Entra
@@ -82,14 +75,7 @@ microsoft/entra-agentid-samples/
     │   │   ├── aws/README.md              ← AWS Bedrock agent + sidecar on ACA
     │   │   └── dev/README.md              ← Local-LLM (Ollama) agent + sidecar on ACA
     │   │
-    │   └── aks/                           ← AKS + Workload Identity
-    │       ├── README.md
-    │       ├── k8s/
-    │       ├── infra/aks.bicep
-    │       └── deploy.sh
-    │
-    ├── aws/                               ← (Future) AWS deployments
-    └── gcp/                               ← (Future) GCP deployments
+
 ```
 
 ---
