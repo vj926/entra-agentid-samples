@@ -92,9 +92,9 @@ microsoft/entra-agentid-samples/
 
 | # | Title | Owner |Status|
 |---|---|---|---|
-| 2.1 | The Sidecar Design Pattern | Razi ([@razi-rais](https://github.com/rbinrais)) |(Done open for review)
-| 2.2 | End-to-End Token Flow: Agent to Weather API | Razi ([@razi-rais](https://github.com/rbinrais)) | (Done open for review)|
-| 2.3 | Run the Sidecar Locally — Developer Quickstart | Razi ([@razi-rais](https://github.com/rbinrais)) |(Done open for review)|
+| 2.1 | The Sidecar Design Pattern | Razi ([@razi-rais](https://github.com/rbinrais)) |https://github.com/microsoft/entra-agentid-samples/blob/dev/sidecar/README.md (Done open for review)|
+| 2.2 | End-to-End Token Flow: Agent to Weather API | Razi ([@razi-rais](https://github.com/rbinrais)) | https://github.com/microsoft/entra-agentid-samples/blob/dev/sidecar/weather-api/README.md (Done open for review)|
+| 2.3 | Run the Sidecar Locally — Developer Quickstart | Razi ([@razi-rais](https://github.com/rbinrais)) |https://github.com/microsoft/entra-agentid-samples/blob/dev/sidecar/dev/README.md(Done open for review)|
 
 ### Section 3 — Third-Party Agent Platforms
 
@@ -123,9 +123,9 @@ microsoft/entra-agentid-samples/
 | # | Title | Owner |Status|
 |---|---|---|---|
 | 4.1 | Deploy to Azure App Service | Vijaya ([@Vijaya] / Razi(rbinrais)  |(In-progress)|
-| 4.2 | Deploy to Azure Container Apps | Razi ([@razi-rais](https://github.com/rbinrais)) |(Done open for review)|
+| 4.2 | Deploy to Azure Container Apps | Razi ([@razi-rais](https://github.com/rbinrais)) |https://github.com/microsoft/entra-agentid-samples/blob/dev/deploy/azure/container-apps/dev/README.md (Done open for review)|
 
-Reminder to updae the AI skills and make sure its reflecting in the repo. 
+**Reminder** to updae the AI skills and make sure its reflecting in the repo. 
 
 ---
 
