@@ -13,7 +13,7 @@ Before starting this implementation guide, ensure you have:
 - **Microsoft Entra ID tenant** with Agent ID preview enabled
 - **PowerShell 7.5 or later** with Microsoft.Graph PowerShell module
 - **Azure CLI** for tenant authentication 
-- **Global Administrator** only for initial setup. After that **Cloud Application Administrator** and **Application Administrator** role to grant Microsoft Graph delegated permissions for agent management operations
+- **Global Administrator** role only for initial setup. After that **Cloud Application Administrator** or **Application Administrator** role to grant Microsoft Graph delegated permissions for agent management operations
 
 ## Core Implementation Workflow
 
