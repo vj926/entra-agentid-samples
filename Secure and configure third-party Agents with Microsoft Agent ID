@@ -1,4 +1,4 @@
-# Secure and configure third-party Agents with Microsoft Agent ID
+# Configure third-party Agents with Microsoft Entra SDK Agent ID
 
 This guide provides hands-on implementation guidance for Microsoft Entra Agent ID, including code samples, PowerShell scripts, and best practices for creating and managing agent identities at scale.
 
@@ -11,9 +11,9 @@ Microsoft Entra Agent ID enables applications and services to authenticate as no
 Before starting this implementation guide, ensure you have:
 
 - **Microsoft Entra ID tenant** with Agent ID preview enabled
-- **PowerShell 5.1 or later** with Microsoft.Graph PowerShell module
-- **Global Administrator** or **Application Administrator** role
-- **Microsoft Graph permissions** for agent management operations
+- **PowerShell 7.5 or later** with Microsoft.Graph PowerShell module
+- **Azure CLI** for tenant authentication 
+- **Global Administrator** only for initial setup. After that **Cloud Application Administrator** and **Application Administrator** role to grant Microsoft Graph delegated permissions for agent management operations
 
 ## Core Implementation Workflow
 
