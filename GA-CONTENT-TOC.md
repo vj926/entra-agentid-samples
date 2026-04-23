@@ -86,7 +86,7 @@ microsoft/entra-agentid-samples/
 
 | # | Title | Owner |Status|
 |---|---|---|---|
-| 1.1 | Prerequisites and Environment Setup | Gargi ([@Gargi-Sinha](https://github.com/Gargi-Sinha)) | Need to complete |
+| 1.1 | Prerequisites and Environment Setup | Gargi ([@Gargi-Sinha](https://github.com/Gargi-Sinha)) | https://github.com/microsoft/entra-agentid-samples/blob/dev/Secure%20and%20configure%20third-party%20Agents%20with%20Microsoft%20Agent%20ID (initial draft) |
 
 ### Section 2 — Sidecar
 
