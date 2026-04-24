@@ -25,8 +25,8 @@ End-to-end provisioning of a Microsoft Entra Agent Identity + OBO-capable client
 3. **Tooling**:
    - Azure CLI (`az`) signed in to the target tenant
    - PowerShell 7+ (`pwsh`)
-   - `Microsoft.Graph.Authentication` and `Microsoft.Graph.Beta.Applications` PowerShell modules
-   - Docker Desktop (for sidecar)
+   - `Microsoft.Graph.Authentication` and `Microsoft.Graph.Beta.Applications` PowerShell modules (install: `Install-Module Microsoft.Graph.Authentication, Microsoft.Graph.Beta.Applications -Scope CurrentUser`)
+   - Docker Desktop (only for local docker-compose in Step 4; **not needed** for ACA deployments — see `deploy-agent-aca-dev`)
 4. **MFA**: If the signing-in user was just created, they MUST complete MFA enrollment via browser first (`AADSTS50079`). Password-only `az login -u -p` will fail.
 
 ## Procedure
@@ -35,10 +35,16 @@ End-to-end provisioning of a Microsoft Entra Agent Identity + OBO-capable client
 
 Run the end-to-end workflow. Creates Blueprint app, Blueprint SP, client secret, Agent Identity, and assigns Graph permissions.
 
+> [!WARNING]
+> Run `Connect-MgGraph` in an **interactive pwsh session**, not via `pwsh -Command "Connect-MgGraph ..."` subshell. The WAM authentication popup hides behind other windows in a subshell and silently times out.
+
+> [!NOTE]
+> The scope list below must match what `EntraAgentID-Functions.ps1` validates internally (10 scopes). If you omit any, the script throws `Missing required Microsoft Graph scopes`.
+
 ```powershell
 pwsh
 . /path/to/repo/scripts/EntraAgentID-Functions.ps1
-Connect-MgGraph -Scopes "AgentIdentityBlueprint.AddRemoveCreds.All","AgentIdentityBlueprint.Create","DelegatedPermissionGrant.ReadWrite.All","Application.Read.All","AgentIdentityBlueprintPrincipal.Create","AppRoleAssignment.ReadWrite.All","Directory.Read.All","User.Read" -TenantId <tenant-id>
+Connect-MgGraph -Scopes "AgentIdentityBlueprint.AddRemoveCreds.All","AgentIdentityBlueprint.Create","AgentIdentityBlueprint.DeleteRestore.All","AgentIdentity.DeleteRestore.All","DelegatedPermissionGrant.ReadWrite.All","Application.Read.All","AgentIdentityBlueprintPrincipal.Create","AppRoleAssignment.ReadWrite.All","Directory.Read.All","User.Read" -TenantId <tenant-id>
 
 $r = Start-EntraAgentIDWorkflow -BlueprintName "Demo Blueprint" -AgentName "Weather Agent" -Permissions @("User.Read.All")
 ```

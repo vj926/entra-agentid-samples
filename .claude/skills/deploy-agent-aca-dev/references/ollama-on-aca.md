@@ -22,6 +22,9 @@ ENTRYPOINT ["ollama", "serve"]
 - **Cons:** ACR image size +~1 GB per model; rebuild on model changes
 - **Script:** [`build-ollama-image.sh`](../scripts/build-ollama-image.sh) automates this
 
+> [!IMPORTANT]
+> **The baked strategy requires a local Docker daemon** (Docker Desktop or equivalent). `az acr build` **cannot** build baked Ollama images — the `RUN ollama serve & ollama pull ...` step needs a running daemon inside the builder, which ACR Build does not support. The image silently fails to appear in ACR. If Docker Desktop is unavailable, use **Strategy B (runtime-pull)** instead.
+
 ### Strategy B — `runtime-pull`
 
 Use `docker.io/ollama/ollama:latest` directly. Model pulls on first request.
