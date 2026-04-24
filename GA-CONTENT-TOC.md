@@ -86,7 +86,7 @@ microsoft/entra-agentid-samples/
 
 | # | Title | Owner |Status|
 |---|---|---|---|
-| 1.1 | Introduction/Pre-reqs/Setup | Gargi ([@Gargi-Sinha](https://github.com/Gargi-Sinha)) | (initial draft) |
+| 1.1 | Introduction/Pre-reqs/Setup | Gargi ([@Gargi-Sinha](https://github.com/Gargi-Sinha)) | https://github.com/microsoft/entra-agentid-samples/blob/dev/Configure-third-party-agents-with-Microsoft-Entra-SDKs.md (initial draft) |
 
 ### Section 2 — Sidecar
 
