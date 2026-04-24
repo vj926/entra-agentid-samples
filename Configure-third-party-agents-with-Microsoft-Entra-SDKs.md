@@ -86,7 +86,7 @@ The **federation pattern** uses Workload Identity Federation (WIF) to exchange c
 
 **Supported platforms:**
 - GCP Workload Identity → Entra Agent ID
-- AWS STS → Entra Agent ID (planned)
+- AWS STS → Entra Agent ID 
 
 ```
 ┌────────────────────────────────┐
@@ -202,8 +202,8 @@ You're developing locally with a local LLM (Ollama). Use the sidecar pattern:
 - Before starting the implementation, ensure you have:
 
 - **PowerShell 7.5 or later** with Microsoft.Graph PowerShell module
-- **Global Administrator** or **Application Administrator** role
-- **Microsoft Graph permissions** for agent management operations
+- **Global Administrator** only for the initial setup
+- **Cloud Application Administrator** or **Application Administrator** role to grant Microsoft Graph delegated permissions for agent management operations
 
 Before you begin:
 
