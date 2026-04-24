@@ -125,12 +125,12 @@ microsoft/entra-agentid-samples/
 | 4.1 | Deploy to Azure App Service | Vijaya ([@Vijaya] / Razi(rbinrais)  |(In-progress)|
 | 4.2 | Deploy to Azure Container Apps | Razi ([@razi-rais](https://github.com/rbinrais)) |https://github.com/microsoft/entra-agentid-samples/blob/dev/deploy/azure/container-apps/dev/README.md (Done open for review)|
 
-**Reminder** to updae the AI skills and make sure its reflecting in the repo. 
+**Reminder** to update the AI skills and make sure its reflecting in the repo. 
 
 ---
 
-PHASE 2 
-
+**PHASE 2 
+**
 Deploy - 
 | 4.2 | Deploy to Azure Kubernetes Service with Workload Identity | ([@yoelhor](https://github.com/yoelhor)) | Pushed because of no activity 
 | 3.2 | GCP: Vertex AI (Gemini) Agent with Entra Agent ID Sidecar | Razi ([@razi-rais](https://github.com/rbinrais)) |
