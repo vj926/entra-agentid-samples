@@ -116,7 +116,7 @@ microsoft/entra-agentid-samples/
 
 | # | Title | Owner |Status|
 |---|---|---|---|
-| 3.5 | N8N: Low-Code Agent with Entra Agent ID | Anton ([@astaykov](https://github.com/astaykov)) |https://github.com/microsoft/entra-agentid-samples/blob/astaykov/n8n/n8n/README.md Done ready for review |
+| 3.5 | N8N: Low-Code Agent with Entra Agent ID | Anton ([@astaykov](https://github.com/astaykov)) | https://github.com/microsoft/entra-agentid-samples/blob/dev/README.md (Done ready for review) |
 
 ### Section 4 — Deploy
 
