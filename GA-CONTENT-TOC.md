@@ -94,7 +94,7 @@ microsoft/entra-agentid-samples/
 |---|---|---|---|
 | 2.1 | The Sidecar Design Pattern | Razi ([@razi-rais](https://github.com/rbinrais)) |https://github.com/microsoft/entra-agentid-samples/blob/dev/sidecar/README.md (Done open for review)|
 | 2.2 | End-to-End Token Flow: Agent to Weather API | Razi ([@razi-rais](https://github.com/rbinrais)) | https://github.com/microsoft/entra-agentid-samples/blob/dev/sidecar/weather-api/README.md (Done open for review)|
-| 2.3 | Run the Sidecar Locally — Developer Quickstart | Razi ([@razi-rais](https://github.com/rbinrais)) |https://github.com/microsoft/entra-agentid-samples/blob/dev/sidecar/dev/README.md(Done open for review)|
+| 2.3 | Run the Sidecar Locally — Developer Quickstart | Razi ([@razi-rais](https://github.com/rbinrais)) |https://github.com/microsoft/entra-agentid-samples/blob/dev/sidecar/dev/README.md (Done open for review)|
 
 ### Section 3 — Third-Party Agent Platforms
 
