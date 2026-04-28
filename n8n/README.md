@@ -2,13 +2,15 @@
 
 > One-command deployment: n8n on Azure Container Apps with Entra Agent ID and Microsoft Graph MCP Server for Enterprise — fully automated from Azure Cloud Shell.
 
+> Disclaimer: This samples demonstrates the use of n8n community node [n8n-nodes-entraagentid](https://www.npmjs.com/package/@astaykov/n8n-nodes-entraagentid) within n8n. It must not be use as a guidance for deploying n8n on Azure. 
+
 ---
 ## Prerequisites
 
-> *Important:* This is a demo oriented infrastrucure automation. It requires high privileges in your environment.
+> *Important:* This is a demo oriented infrastructure automation. It requires high privileges in your environment.
 
 - An Azure subscription with quota for Azure OpenAI (GPT-4o or similar), PostgreSQL Flexible server, Azure Container Apps.
-- **Entra role:** Global Administrator: this role is required because of the many entities created along with amdin consent to permissions. The automation will fail if you do not have active `Global Administrator` role.
+- **Entra role:** Global Administrator: this role is required because of the many entities created along with admin consent to permissions. The automation will fail if you do not have active `Global Administrator` role.
 
 **Azure Cloud Shell** (recommended) comes with everything pre-installed: Azure CLI, Azure Developer CLI (`azd`), PowerShell 7, and Git.
 
@@ -35,13 +37,6 @@ git clone https://github.com/astaykov/n8n-aca.git && cd n8n-aca && azd up
 ```
 
 </details>
-
----
-
-
-## 📺 Video walkthrough
-
-[![Watch the full setup walkthrough on YouTube](https://img.youtube.com/vi/DXKGgTTrsEc/maxresdefault.jpg)](https://www.youtube.com/watch?v=DXKGgTTrsEc)
 
 ---
 
