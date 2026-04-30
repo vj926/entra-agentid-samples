@@ -9,7 +9,7 @@ Runnable samples for **Microsoft Entra Agent ID** — Entra's purpose-built iden
 | [`sidecar/`](sidecar/) | Sidecar-pattern samples (agent + Entra SDK auth sidecar) with local-LLM and AWS Bedrock editions |
 | [`scripts/`](scripts/) | PowerShell + bash tooling to provision Blueprint, Agent Identity, and Client SPA in your tenant |
 | [`deploy/`](deploy/) | Deploy the samples to Azure (Container Apps today; App Service and AKS coming) |
-| [`n8n/`](n8n/) | Full end-to-end integrated deployment of n8n platform on Azure Container Apps. Checkout the [`n8n/README.md`](n8n/README.md) for details |
+| [`n8n/`](n8n/) | Full end-to-end integrated deployment of n8n platform on Azure Container Apps.|
 
 ## Quick start
 
