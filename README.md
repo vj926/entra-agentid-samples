@@ -31,11 +31,13 @@ Runnable samples for **Microsoft Entra Agent ID** — Entra's purpose-built iden
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
+## Security
+Microsoft takes the security of our software products and services seriously, which includes all source code repositories in our GitHub organizations.
+Please do not report security vulnerabilities through public GitHub issues.
+For security reporting information, locations, contact information, and policies, please review the latest guidance for Microsoft repositories at https://aka.ms/SECURITY.md.
+
 ## License and code of conduct
 
-Copyright (c) Microsoft Corporation. All rights reserved.
-
+Copyright (c) Microsoft Corporation. All rights reserved. 
 Licensed under the MIT License - see the [`LICENSE`](LICENSE) file for details. This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 
-- [`SECURITY.md`](SECURITY.md)
-- 
