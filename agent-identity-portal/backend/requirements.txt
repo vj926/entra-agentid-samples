@@ -1,0 +1,16 @@
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+sqlalchemy==2.0.36
+pydantic==2.10.3
+pydantic-settings==2.6.1
+python-dotenv==1.0.1
+httpx==0.28.1
+msal==1.31.1
+# PyJWT is maintained and not affected by the python-jose algorithm-confusion CVEs.
+PyJWT[crypto]==2.10.1
+cryptography==44.0.0
+python-multipart==0.0.18
+aiosmtplib==3.0.2
+email-validator==2.2.0
+azure-identity==1.19.0
+azure-keyvault-secrets==4.9.0

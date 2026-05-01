@@ -1,0 +1,35 @@
+# Environment files with secrets
+.env
+.env.*
+!.env.example
+backend/.env
+frontend/.env
+
+# Azure / deployment artifacts (may contain tenant IDs or secrets)
+ca-config.yaml
+*.ca-config.yaml
+deployment-output.*
+azure.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.db
+*.sqlite
+*.sqlite3
+.pytest_cache/
+.venv/
+venv/
+
+# Node
+node_modules/
+frontend/build/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

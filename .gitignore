@@ -1,0 +1,31 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets — NEVER commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+
+# Local deploy vars
+deploy-vars.sh
+deploy-vars*.sh
+!deploy-vars.sh.template
+
+# IDE
+.vscode/
+.idea/
+
+*.log
+
+# Local PR scratchpads
+PR-*-DESCRIPTION.md
