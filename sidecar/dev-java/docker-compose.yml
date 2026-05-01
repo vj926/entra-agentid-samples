@@ -1,0 +1,81 @@
+# Usage: docker compose --env-file .env up --build
+# Java port of sidecar/dev — runs on host port 3004 to coexist with the Python sample (3003).
+
+services:
+  # Microsoft Entra SDK for AgentID Sidecar
+  # NOTE: No ports exposed to host — per Microsoft security guidance,
+  # the SDK API must only be reachable within the same trust boundary.
+  # https://learn.microsoft.com/en-us/entra/msidweb/agent-id-sdk/security
+  sidecar:
+    image: mcr.microsoft.com/entra-sdk/auth-sidecar:1.0.0-azurelinux3.0-distroless
+    container_name: agent-id-sidecar-dev-java
+    environment:
+      - AzureAd__Instance=https://login.microsoftonline.com/
+      - AzureAd__TenantId=${TENANT_ID}
+      - AzureAd__ClientId=${BLUEPRINT_APP_ID}
+      - AzureAd__ClientCredentials__0__SourceType=ClientSecret
+      - AzureAd__ClientCredentials__0__ClientSecret=${BLUEPRINT_CLIENT_SECRET}
+      - DownstreamApis__graph-app__BaseUrl=https://graph.microsoft.com/v1.0/
+      - DownstreamApis__graph-app__Scopes__0=https://graph.microsoft.com/.default
+      - DownstreamApis__graph-app__RequestAppToken=true
+      - DownstreamApis__graph__BaseUrl=https://graph.microsoft.com/v1.0/
+      - DownstreamApis__graph__Scopes__0=https://graph.microsoft.com/.default
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5000
+      - AllowedHosts=*
+    networks:
+      - agent-network-dev-java
+
+  # Weather API - Validates Agent Identity tokens (shared with the Python sample)
+  weather-api:
+    build: ../weather-api
+    container_name: weather-api-dev-java
+    environment:
+      - VALIDATE_TOKEN_SIGNATURE=${VALIDATE_TOKEN_SIGNATURE:-true}
+      - TENANT_ID=${TENANT_ID}
+    networks:
+      - agent-network-dev-java
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # LLM Agent with Chat UI (Java / Spring Boot)
+  llm-agent:
+    build: .
+    container_name: llm-agent-dev-java
+    ports:
+      - "3004:3000"
+    environment:
+      - SIDECAR_URL=http://sidecar:5000
+      - WEATHER_API_URL=http://weather-api:8080
+      - AGENT_APP_ID=${AGENT_APP_ID}
+      - BLUEPRINT_APP_ID=${BLUEPRINT_APP_ID}
+      - TENANT_ID=${TENANT_ID}
+      - CLIENT_SPA_APP_ID=${CLIENT_SPA_APP_ID:-}
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=qwen2.5:1.5b
+    depends_on:
+      - sidecar
+      - weather-api
+    networks:
+      - agent-network-dev-java
+
+  # Ollama LLM
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-dev-java
+    ports:
+      - "11435:11434"
+    volumes:
+      - ollama-data-java:/root/.ollama
+    networks:
+      - agent-network-dev-java
+
+networks:
+  agent-network-dev-java:
+    driver: bridge
+
+volumes:
+  ollama-data-java:

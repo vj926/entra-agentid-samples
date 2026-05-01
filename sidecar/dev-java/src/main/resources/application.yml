@@ -1,0 +1,28 @@
+server:
+  port: 3000
+  forward-headers-strategy: framework
+
+spring:
+  application:
+    name: sidecar-dev-java
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+  mvc:
+    static-path-pattern: /**
+  web:
+    resources:
+      static-locations: classpath:/static/
+
+agent:
+  sidecar-url: ${SIDECAR_URL:http://sidecar:5000}
+  weather-api-url: ${WEATHER_API_URL:http://weather-api:8080}
+  agent-app-id: ${AGENT_APP_ID:}
+  blueprint-app-id: ${BLUEPRINT_APP_ID:}
+  tenant-id: ${TENANT_ID:}
+  client-spa-app-id: ${CLIENT_SPA_APP_ID:}
+  ollama-url: ${OLLAMA_URL:http://ollama:11434}
+  ollama-model: ${OLLAMA_MODEL:llama3.2}
+
+logging:
+  level:
+    com.microsoft.entra.agentid.sidecar.dev: INFO

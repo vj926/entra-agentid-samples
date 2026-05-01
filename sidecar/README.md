@@ -3,7 +3,8 @@
 How the **Microsoft Entra Agent ID sidecar** lets an AI agent call downstream APIs with a secure, per-agent identity — without the agent code ever seeing a secret.
 
 For runnable samples, see:
-- [`dev/`](dev/README.md) — local-LLM (Ollama) edition
+- [`dev/`](dev/README.md) — local-LLM (Ollama) edition, Python / Flask / LangChain
+- [`dev-java/`](dev-java/README.md) — local-LLM (Ollama) edition, Java / Spring Boot / LangChain4j
 - [`aws/`](aws/README.md) — AWS Bedrock (Claude) edition
 - [`weather-api/`](weather-api/README.md) — shared downstream API used by both
 
@@ -67,7 +68,7 @@ Provisioning is covered in [`../scripts/README.md`](../scripts/README.md) — th
 | To… | Go to |
 |---|---|
 | Set up Blueprint + Agent Identity in your Entra tenant | [`../scripts/README.md`](../scripts/README.md) |
-| Run a local-LLM demo in five minutes | [`dev/README.md`](dev/README.md) |
+| Run a local-LLM demo in five minutes | [`dev/README.md`](dev/README.md) (Python) or [`dev-java/README.md`](dev-java/README.md) (Java) |
 | Run the same demo against AWS Bedrock | [`aws/README.md`](aws/README.md) |
 | Deploy to Azure Container Apps (no stored secrets) | [`../deploy/azure/container-apps/`](../deploy/azure/container-apps/) |
 
