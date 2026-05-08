@@ -9,7 +9,7 @@ msal==1.31.1
 # PyJWT is maintained and not affected by the python-jose algorithm-confusion CVEs.
 PyJWT[crypto]==2.10.1
 cryptography==44.0.0
-python-multipart==0.0.18
+python-multipart==0.0.27
 aiosmtplib==3.0.2
 email-validator==2.2.0
 azure-identity==1.19.0
