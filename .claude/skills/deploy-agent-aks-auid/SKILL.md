@@ -1,5 +1,5 @@
 ---
-name: deploy-auid-demo
+name: deploy-agent-aks-auid
 description: Provision and deploy the Agent ID User (AUID) demo on AKS using the Microsoft Entra SDK auth-sidecar. Use when the user mentions "AUID", "Agent ID User", "microsoft.graph.agentUser", "digital colleague identity", "AUID on AKS", or wants to demo "an agent acting as its own user" (the non-OBO complement to deploy-agent-aks-dev). The skill is fully self-contained: tenant-setup PowerShell scripts, AKS orchestrator + manifests, and the FastAPI broker / Weather Agent / UI source all live under this skill folder. The auth-sidecar (`mcr.microsoft.com/entra-sdk/auth-sidecar`) performs the full Blueprint → Agent ID → user_fic chain INSIDE the pod; the app code never calls login.microsoftonline.com.
 ---
 
@@ -60,7 +60,7 @@ The backend code ([`backend/sidecar_client.py`](./backend/sidecar_client.py)) **
 ## Pre-flight checklist (DO NOT SKIP)
 
 ```powershell
-pwsh -NoProfile -File .claude/skills/deploy-auid-demo/scripts/00-preflight-check.ps1
+pwsh -NoProfile -File .claude/skills/deploy-agent-aks-auid/scripts/00-preflight-check.ps1
 ```
 
 The script signs the operator in (device code) and produces a colored PASS / FAIL / WARN report for every permission, scope, app role, service principal, and federated identity credential required by the AUID flow. It exits non-zero if anything is FAIL, so you can wire it into CI.
@@ -85,7 +85,7 @@ If preflight fails, **do not run any later script** — talk through the FAIL ro
 
 ### Step 1.1 — Provision the Agentic User
 ```powershell
-pwsh -NoProfile -File .claude/skills/deploy-auid-demo/scripts/01-provision-agentic-user.ps1 `
+pwsh -NoProfile -File .claude/skills/deploy-agent-aks-auid/scripts/01-provision-agentic-user.ps1 `
     -TenantId            <TENANT_ID> `
     -BlueprintAppId      <BLUEPRINT_APP_ID> `
     -AgentIdentityAppId  <AGENT_IDENTITY_APP_ID>
@@ -96,7 +96,7 @@ Uses an app-only token from the Blueprint (with the `AgentIdUser.ReadWrite.Ident
 
 ### Step 1.2 — Grant the Agentic User delegated Graph access
 ```powershell
-pwsh -NoProfile -File .claude/skills/deploy-auid-demo/scripts/02-grant-agentic-user-consent.ps1 `
+pwsh -NoProfile -File .claude/skills/deploy-agent-aks-auid/scripts/02-grant-agentic-user-consent.ps1 `
     -TenantId           <TENANT_ID> `
     -AgentIdentityAppId <AGENT_IDENTITY_APP_ID>
 ```
@@ -104,7 +104,7 @@ Grants `User.Read` for `AllPrincipals` on the Agent Identity service principal v
 
 ### Step 1.3 — Register the Weather Agent app (REQUIRED)
 ```powershell
-pwsh -NoProfile -File .claude/skills/deploy-auid-demo/scripts/04-register-weather-app.ps1 `
+pwsh -NoProfile -File .claude/skills/deploy-agent-aks-auid/scripts/04-register-weather-app.ps1 `
     -TenantId           <TENANT_ID> `
     -AgentIdentityAppId <AGENT_IDENTITY_APP_ID>
 ```
@@ -121,7 +121,7 @@ pwsh -NoProfile -File .claude/skills/deploy-auid-demo/scripts/04-register-weathe
 
 ### Step 2.1 — Fill in deploy-vars
 ```bash
-cp .claude/skills/deploy-auid-demo/deploy/aks/scripts/deploy-vars.sh.template /tmp/deploy-vars.sh
+cp .claude/skills/deploy-agent-aks-auid/deploy/aks/scripts/deploy-vars.sh.template /tmp/deploy-vars.sh
 # Edit /tmp/deploy-vars.sh — set:
 #   TENANT_ID, SUBSCRIPTION_ID, RG, LOCATION, AKS_NAME, ACR_NAME (globally unique),
 #   BLUEPRINT_APP_ID, AGENT_IDENTITY_APP_ID,
@@ -135,7 +135,7 @@ source /tmp/deploy-vars.sh
 az login --tenant "${SUBSCRIPTION_TENANT_ID:-$TENANT_ID}"
 az account set --subscription "$SUBSCRIPTION_ID"
 
-bash .claude/skills/deploy-auid-demo/deploy/aks/scripts/deploy-aks-dev.sh
+bash .claude/skills/deploy-agent-aks-auid/deploy/aks/scripts/deploy-aks-dev.sh
 ```
 
 The orchestrator does:
