@@ -15,7 +15,7 @@ The Client SPA app was registered with only `http://localhost:3003`. For browser
 
 ```bash
 APP_FQDN="$APP_FQDN" \
-  bash .claude/skills/deploy-agent-aks-dev/scripts/add-spa-redirect-uri.sh
+  bash .claude/skills/deploy-agent-aks-agentid/scripts/add-spa-redirect-uri.sh
 ```
 
 The script idempotently appends both `http://localhost:8080/` and `http://$APP_FQDN/` to `spa.redirectUris`.
@@ -39,7 +39,7 @@ AADSTS65001: The user or administrator has not consented to use the application
 ### Fix
 
 ```powershell
-pwsh -NoProfile -File .claude/skills/deploy-agent-aks-dev/scripts/grant-agent-obo-consent.ps1 `
+pwsh -NoProfile -File .claude/skills/deploy-agent-aks-agentid/scripts/grant-agent-obo-consent.ps1 `
   -AgentAppId "$env:AGENT_CLIENT_ID" -TenantId "$env:TENANT_ID"
 ```
 
@@ -48,7 +48,7 @@ Idempotent — checks for an existing grant first. Creates `oauth2PermissionGran
 ## 3. Open the agent via port-forward to exercise OBO
 
 ```bash
-bash .claude/skills/deploy-agent-aks-dev/scripts/port-forward.sh
+bash .claude/skills/deploy-agent-aks-agentid/scripts/port-forward.sh
 # in another shell / browser:
 # http://localhost:8080
 ```

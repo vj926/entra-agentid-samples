@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# teardown-aks-dev.sh — orchestrator for teardown-agent-aks-dev.
+# teardown-aks-dev.sh — orchestrator for teardown-agent-aks-agentid.
 #
 # Safe by default: DRY_RUN=1, DELETE_ENTRA=0.
 #

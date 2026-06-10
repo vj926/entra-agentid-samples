@@ -16,7 +16,7 @@ NS="agentid"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # Manifests live in this skill's manifests/ directory (sibling of scripts/).
 MANIFESTS="$SCRIPT_DIR/../manifests"
-# Skill scripts are at .claude/skills/deploy-agent-aks-dev/scripts/ so the workspace
+# Skill scripts are at .claude/skills/deploy-agent-aks-agentid/scripts/ so the workspace
 # (or upstream repo) root is 4 up.
 REPO_ROOT="$( cd "$SCRIPT_DIR/../../../.." && pwd )"
 

@@ -1,6 +1,6 @@
 ---
-name: deploy-agent-aks-dev
-description: 'AI-led, end-to-end deployment of an agent that authenticates with Microsoft Entra Agent ID to Azure Kubernetes Service, using Azure Workload Identity instead of client secrets. Use when an engineering team wants to host their own agent (or this repo''s `sidecar/dev` sample) on AKS with the Entra Agent ID auth-sidecar pattern; when promoting an existing docker-compose stack from ClientSecret to secretless federation; or when an organization already standardized on Kubernetes and needs Agent ID to fit alongside their other workloads. Includes a kind-based local smoke test (no Azure cost), a one-shot orchestrator, a port-forward workflow for the OBO sign-in flow, and an explicit "Adapt for your own agent" section. NOT for Azure Container Apps (use `deploy-agent-aca-dev`), App Service (use `deploy-agent-appservice-dev`), or the AWS Bedrock variant (use `deploy-agent-aca-aws`). Chains to `entra-agent-id-setup` for the Blueprint + Agent Identity + Client SPA objects, and pairs with `teardown-agent-aks-dev` for cleanup.'
+name: deploy-agent-aks-agentid
+description: 'AI-led, end-to-end deployment of an agent that authenticates with Microsoft Entra Agent ID to Azure Kubernetes Service, using Azure Workload Identity instead of client secrets. Use when an engineering team wants to host their own agent (or this repo''s `sidecar/dev` sample) on AKS with the Entra Agent ID auth-sidecar pattern; when promoting an existing docker-compose stack from ClientSecret to secretless federation; or when an organization already standardized on Kubernetes and needs Agent ID to fit alongside their other workloads. Includes a kind-based local smoke test (no Azure cost), a one-shot orchestrator, a port-forward workflow for the OBO sign-in flow, and an explicit "Adapt for your own agent" section. NOT for Azure Container Apps (use `deploy-agent-aca-dev`), App Service (use `deploy-agent-appservice-dev`), or the AWS Bedrock variant (use `deploy-agent-aca-aws`). Chains to `entra-agent-id-setup` for the Blueprint + Agent Identity + Client SPA objects, and pairs with `teardown-agent-aks-agentid` for cleanup.'
 ---
 
 # Deploy an Entra Agent ID Agent to Azure Kubernetes Service (AI-Led)
@@ -72,7 +72,7 @@ The procedure is built for the included `sidecar/dev` sample. If you're bringing
 ### Step 0 — Confirm account and populate variables
 
 ```bash
-cp .claude/skills/deploy-agent-aks-dev/scripts/deploy-vars.sh.template /tmp/deploy-vars.sh
+cp .claude/skills/deploy-agent-aks-agentid/scripts/deploy-vars.sh.template /tmp/deploy-vars.sh
 # Edit /tmp/deploy-vars.sh: fill in TENANT_ID, SUBSCRIPTION_ID, RG, LOCATION, SKUs.
 source /tmp/deploy-vars.sh
 
@@ -90,7 +90,7 @@ Delegate to [`entra-agent-id-setup`](../entra-agent-id-setup/SKILL.md). Capture 
 Then configure the Blueprint for OBO (sets `identifierUris`, adds the `access_as_user` scope, pre-authorizes the Client SPA, and pre-grants admin consent — all idempotent):
 
 ```bash
-pwsh -NoProfile -File .claude/skills/deploy-agent-aks-dev/scripts/setup-obo-blueprint-for-aks.ps1 \
+pwsh -NoProfile -File .claude/skills/deploy-agent-aks-agentid/scripts/setup-obo-blueprint-for-aks.ps1 \
   -BlueprintAppId "$BLUEPRINT_APP_ID" \
   -ClientSpaAppId "$CLIENT_SPA_APP_ID" \
   -AgentAppId    "$AGENT_CLIENT_ID" \
@@ -104,7 +104,7 @@ Skip this script if the deployment is autonomous-only (no user sign-in). It's sa
 Validate every manifest against a real Kubernetes API server with no Azure cost. The smoke test uses `ClientSecret` for the sidecar (matches the upstream docker-compose), so no federation is required.
 
 ```bash
-bash .claude/skills/deploy-agent-aks-dev/scripts/smoke-test-kind.sh
+bash .claude/skills/deploy-agent-aks-agentid/scripts/smoke-test-kind.sh
 ```
 
 What it covers and what it doesn't: [references/smoke-test.md](./references/smoke-test.md). Output is one line — `SMOKE PASS` or `SMOKE FAIL: <reason>`. **Do this before Step 2** unless you're already comfortable with the manifests.
@@ -112,7 +112,7 @@ What it covers and what it doesn't: [references/smoke-test.md](./references/smok
 ### Step 2 — Azure infrastructure (RG + ACR + AKS with OIDC + Workload Identity)
 
 ```bash
-bash .claude/skills/deploy-agent-aks-dev/scripts/01-create-aks.sh
+bash .claude/skills/deploy-agent-aks-agentid/scripts/01-create-aks.sh
 ```
 
 Creates:
@@ -128,7 +128,7 @@ Creates:
 ### Step 3 — Federate the KSA to the Blueprint app (the only federation chain)
 
 ```bash
-pwsh -NoProfile -File .claude/skills/deploy-agent-aks-dev/scripts/03-federate-blueprint.ps1 \
+pwsh -NoProfile -File .claude/skills/deploy-agent-aks-agentid/scripts/03-federate-blueprint.ps1 \
   -TenantId       "$TENANT_ID" \
   -BlueprintAppId "$BLUEPRINT_APP_ID" \
   -OidcIssuerUrl  "$OIDC_ISSUER" \
@@ -145,7 +145,7 @@ Adds one Federated Identity Credential on the Blueprint app:
 ### Step 4 — Build and push container images
 
 ```bash
-bash .claude/skills/deploy-agent-aks-dev/scripts/02-build-and-push.sh
+bash .claude/skills/deploy-agent-aks-agentid/scripts/02-build-and-push.sh
 ```
 
 `az acr build` for `llm-agent` and `weather-api`. **No local Docker required.** Ollama uses the upstream `ollama/ollama:latest` image as-is — the model is fetched by an initContainer on first pod start and persisted in a PVC. If your tenant has an Azure Policy blocking public Docker Hub pulls, pre-import: `az acr import --name "$ACR_NAME" --source docker.io/ollama/ollama:latest` and update `30-ollama.yaml` to reference the ACR copy.
@@ -153,7 +153,7 @@ bash .claude/skills/deploy-agent-aks-dev/scripts/02-build-and-push.sh
 ### Step 5 — Apply manifests
 
 ```bash
-bash .claude/skills/deploy-agent-aks-dev/scripts/04-apply-manifests.sh
+bash .claude/skills/deploy-agent-aks-agentid/scripts/04-apply-manifests.sh
 ```
 
 Renders `manifests/*.yaml` through `envsubst` (with an **explicit varlist** — `$TENANT_ID $BLUEPRINT_APP_ID $AGENT_CLIENT_ID $ACR_NAME $OLLAMA_MODEL $CLIENT_SPA_APP_ID` — to avoid clobbering shell variables like `$PID` inside init scripts), then `kubectl apply -f -`, then `kubectl rollout status` per Deployment, and finally waits for the LoadBalancer external IP. Captures `APP_FQDN=<LB-IP>` into `/tmp/deploy-vars.sh`.
@@ -167,20 +167,20 @@ Renders `manifests/*.yaml` through `envsubst` (with an **explicit varlist** — 
 
    ```bash
    APP_FQDN="$APP_FQDN" \
-     bash .claude/skills/deploy-agent-aks-dev/scripts/add-spa-redirect-uri.sh
+     bash .claude/skills/deploy-agent-aks-agentid/scripts/add-spa-redirect-uri.sh
    ```
 
 2. **Grant Agent → Graph delegated `User.Read`** (fixes `AADSTS65001` on OBO):
 
    ```bash
-   pwsh -NoProfile -File .claude/skills/deploy-agent-aks-dev/scripts/grant-agent-obo-consent.ps1 \
+   pwsh -NoProfile -File .claude/skills/deploy-agent-aks-agentid/scripts/grant-agent-obo-consent.ps1 \
      -AgentAppId "$AGENT_CLIENT_ID" -TenantId "$TENANT_ID"
    ```
 
 3. **Use port-forward for OBO sign-in.** The LoadBalancer is plain HTTP, which browsers refuse to treat as a "secure context" — MSAL's PKCE flow needs `crypto.subtle`, which is gated on secure-context, so the sign-in popup never opens on `http://<LB-IP>`. Loopback is exempt:
 
    ```bash
-   bash .claude/skills/deploy-agent-aks-dev/scripts/port-forward.sh
+   bash .claude/skills/deploy-agent-aks-agentid/scripts/port-forward.sh
    # browser:  http://localhost:8080  → click "Sign In"
    ```
 
@@ -250,7 +250,7 @@ When prereqs are met and SKU variables confirmed:
 
 ```bash
 source /tmp/deploy-vars.sh
-bash .claude/skills/deploy-agent-aks-dev/scripts/deploy-aks-dev.sh
+bash .claude/skills/deploy-agent-aks-agentid/scripts/deploy-aks-dev.sh
 ```
 
 Idempotent. Runs Steps 2 → 5 in order. Steps 0, 1, A, 6 require human decisions or interactive sign-in and remain manual.
@@ -289,5 +289,5 @@ Persisted in `/tmp/deploy-vars.sh`:
 ## Paired skills
 
 - **Setup of Entra objects:** [`entra-agent-id-setup`](../entra-agent-id-setup/SKILL.md) — creates Blueprint + Agent Identity + Client SPA.
-- **Teardown:** [`teardown-agent-aks-dev`](../teardown-agent-aks-dev/SKILL.md) — reverses this skill. DRY-RUN by default. Cleans the RG, the FIC on the Blueprint, and (opt-in) the Entra apps.
+- **Teardown:** [`teardown-agent-aks-agentid`](../teardown-agent-aks-agentid/SKILL.md) — reverses this skill. DRY-RUN by default. Cleans the RG, the FIC on the Blueprint, and (opt-in) the Entra apps.
 - **Alternate hosting:** [`deploy-agent-aca-dev`](../deploy-agent-aca-dev/SKILL.md) — same agent, Azure Container Apps instead of AKS. Use when the team is not already on Kubernetes.

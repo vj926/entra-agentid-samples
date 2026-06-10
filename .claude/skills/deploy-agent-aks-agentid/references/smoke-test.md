@@ -30,12 +30,12 @@ So the smoke test proves the **kubernetes wiring** is correct. The **secretless 
 source /tmp/deploy-vars.sh   # for TENANT_ID, BLUEPRINT_APP_ID, *_CLIENT_ID
 export BLUEPRINT_CLIENT_SECRET="<from your Blueprint app>"
 
-bash .claude/skills/deploy-agent-aks-dev/scripts/smoke-test-kind.sh
+bash .claude/skills/deploy-agent-aks-agentid/scripts/smoke-test-kind.sh
 # ... runs for 5-10 min on first run (mostly Ollama model pull) ...
 # Last line: SMOKE PASS  or  SMOKE FAIL: <reason>
 
 # Cleanup:
-bash .claude/skills/deploy-agent-aks-dev/scripts/smoke-test-kind.sh --cleanup
+bash .claude/skills/deploy-agent-aks-agentid/scripts/smoke-test-kind.sh --cleanup
 ```
 
 ## How it differs from production manifests

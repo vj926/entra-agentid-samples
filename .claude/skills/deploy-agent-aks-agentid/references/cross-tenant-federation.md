@@ -61,4 +61,4 @@ For `add-spa-redirect-uri.sh` the script calls `az account get-access-token --te
 
 ## Teardown caveat
 
-The companion `teardown-agent-aks-dev` skill uses the same split: `SUBSCRIPTION_TENANT_ID` for the RG delete, `TENANT_ID` for FIC delete on the Blueprint and (opt-in) Entra-object deletes. Keep both vars in `/tmp/deploy-vars.sh` so teardown can target them correctly.
+The companion `teardown-agent-aks-agentid` skill uses the same split: `SUBSCRIPTION_TENANT_ID` for the RG delete, `TENANT_ID` for FIC delete on the Blueprint and (opt-in) Entra-object deletes. Keep both vars in `/tmp/deploy-vars.sh` so teardown can target them correctly.

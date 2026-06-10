@@ -21,7 +21,7 @@ In this tutorial, you learn how to:
 > * Verify the autonomous and on-behalf-of (OBO) identity flows end to end.
 
 > [!TIP]
-> **Recommended: AI-assisted deployment.** The fastest, least error-prone way to finish this tutorial is to pair an AI assistant with the skill packaged in this repo: [`.claude/skills/deploy-agent-aks-dev/SKILL.md`](../../../.claude/skills/deploy-agent-aks-dev/SKILL.md). The assistant confirms your SKU choices, picks the right Ollama model strategy, handles the cross-tenant federation case if it applies, and surfaces known failure modes in real time — typically cutting deployment time from hours to minutes. Running the tutorial end-to-end by hand is fully supported (every command is documented below); the skill just front-loads the decisions.
+> **Recommended: AI-assisted deployment.** The fastest, least error-prone way to finish this tutorial is to pair an AI assistant with the skill packaged in this repo: [`.claude/skills/deploy-agent-aks-agentid/SKILL.md`](../../../.claude/skills/deploy-agent-aks-agentid/SKILL.md). The assistant confirms your SKU choices, picks the right Ollama model strategy, handles the cross-tenant federation case if it applies, and surfaces known failure modes in real time — typically cutting deployment time from hours to minutes. Running the tutorial end-to-end by hand is fully supported (every command is documented below); the skill just front-loads the decisions.
 >
 > The skill works with **Claude Code** (which reads `.claude/skills/` by default) and with **GitHub Copilot Chat** (ask it to read the `SKILL.md` file). If you prefer a manual run, continue reading — the tutorial remains the source of truth.
 
@@ -201,7 +201,7 @@ Before provisioning anything, pick a SKU for each of the following. The table li
 > [!WARNING]
 > **`ENABLE_LOGS=none` + Ollama init container.** The init container does `ollama pull <model>` on first replica start (up to 5 min for a 7B model). Without Container Insights you can only inspect this via live `kubectl logs`; once the pod restarts there is no history. Turn logs on for the first deploy.
 
-For the full decision matrix, see the skill reference: [`sku-sizing.md`](../../../.claude/skills/deploy-agent-aks-dev/references/sku-sizing.md).
+For the full decision matrix, see the skill reference: [`sku-sizing.md`](../../../.claude/skills/deploy-agent-aks-agentid/references/sku-sizing.md).
 
 ## 3. Final object inventory
 
@@ -303,7 +303,7 @@ export CLIENT_SPA_APP_ID=$(grep '^CLIENT_SPA_APP_ID=' scripts/.env | cut -d= -f2
 ### 5.3 Configure the Blueprint for OBO
 
 ```powershell
-pwsh -NoProfile -File .claude/skills/deploy-agent-aks-dev/scripts/setup-obo-blueprint-for-aks.ps1 `
+pwsh -NoProfile -File .claude/skills/deploy-agent-aks-agentid/scripts/setup-obo-blueprint-for-aks.ps1 `
   -BlueprintAppId $env:BLUEPRINT_APP_ID `
   -ClientSpaAppId $env:CLIENT_SPA_APP_ID `
   -AgentAppId $env:AGENT_CLIENT_ID `
@@ -315,7 +315,7 @@ pwsh -NoProfile -File .claude/skills/deploy-agent-aks-dev/scripts/setup-obo-blue
 OBO requires a **delegated** `User.Read` grant in addition to the application permissions `Start-EntraAgentIDWorkflow` already granted. Without this, users hit `AADSTS65001`.
 
 ```powershell
-pwsh -NoProfile -File .claude/skills/deploy-agent-aks-dev/scripts/grant-agent-obo-consent.ps1 `
+pwsh -NoProfile -File .claude/skills/deploy-agent-aks-agentid/scripts/grant-agent-obo-consent.ps1 `
   -AgentAppId $env:AGENT_CLIENT_ID -TenantId $env:TENANT_ID
 ```
 
@@ -414,7 +414,7 @@ export TENANT_ID="<entra-tenant — Blueprint & Agent live here>"
 export SUBSCRIPTION_TENANT_ID="<azure-sub tenant — AKS/ACR live here>"
 ```
 
-Run `az login` once per tenant; the CLI tracks the two contexts side by side. The federation Graph call always uses `$TENANT_ID` (Blueprint tenant); the cluster commands always use `$SUBSCRIPTION_TENANT_ID` (Azure tenant). Full pattern, variable contract, and common errors: [`cross-tenant-federation.md`](../../../.claude/skills/deploy-agent-aks-dev/references/cross-tenant-federation.md).
+Run `az login` once per tenant; the CLI tracks the two contexts side by side. The federation Graph call always uses `$TENANT_ID` (Blueprint tenant); the cluster commands always use `$SUBSCRIPTION_TENANT_ID` (Azure tenant). Full pattern, variable contract, and common errors: [`cross-tenant-federation.md`](../../../.claude/skills/deploy-agent-aks-agentid/references/cross-tenant-federation.md).
 
 ## 8. Phase 4 — Build and push container images
 
@@ -436,14 +436,14 @@ az acr build --registry "$ACR_NAME" \
 
 ## 9. Phase 5 — Deploy the Kubernetes workloads
 
-The full manifest set lives in [`.claude/skills/deploy-agent-aks-dev/manifests/`](../../../.claude/skills/deploy-agent-aks-dev/manifests/) and uses `${VAR}` placeholders that `envsubst` substitutes at apply time.
+The full manifest set lives in [`.claude/skills/deploy-agent-aks-agentid/manifests/`](../../../.claude/skills/deploy-agent-aks-agentid/manifests/) and uses `${VAR}` placeholders that `envsubst` substitutes at apply time.
 
 ### 9.1 Render and apply
 
 ```bash
 set -a; source /tmp/deploy-vars.sh; set +a    # auto-export every variable
 
-MANIFEST_DIR=".claude/skills/deploy-agent-aks-dev/manifests"
+MANIFEST_DIR=".claude/skills/deploy-agent-aks-agentid/manifests"
 
 # Render with explicit varlist so typos fail loudly instead of producing empty strings
 VARLIST='$TENANT_ID $BLUEPRINT_APP_ID $AGENT_CLIENT_ID $CLIENT_SPA_APP_ID $ACR_NAME $OLLAMA_MODEL $STORAGE_GB'
@@ -485,7 +485,7 @@ Two manual steps that can't be done before the cluster exists.
 ### 10.1 Add the LoadBalancer IP to the Client SPA redirect URIs
 
 ```bash
-bash .claude/skills/deploy-agent-aks-dev/scripts/add-spa-redirect-uri.sh
+bash .claude/skills/deploy-agent-aks-agentid/scripts/add-spa-redirect-uri.sh
 ```
 
 The script PATCHes `spa.redirectUris` on the Client SPA app directly via Graph. It always adds `http://localhost:8080/` (used for the port-forward sign-in path in [§11.4](#114-obo-flow-via-port-forward)) and additionally adds `http://${APP_FQDN}/` if `APP_FQDN` is set. `az ad app update --web-redirect-uris` does **not** affect SPA redirect URIs — that's why this is a Graph PATCH.
@@ -629,18 +629,18 @@ kubectl -n agentid exec deploy/ollama -- ollama list
 
 ## 15. Clean teardown
 
-> **TIP — AI-assisted teardown.** If you use Claude Code or GitHub Copilot, invoke the [`teardown-agent-aks-dev`](../../../.claude/skills/teardown-agent-aks-dev/SKILL.md) skill. It runs the same commands below with dry-run by default and prompts at each destructive step.
+> **TIP — AI-assisted teardown.** If you use Claude Code or GitHub Copilot, invoke the [`teardown-agent-aks-agentid`](../../../.claude/skills/teardown-agent-aks-agentid/SKILL.md) skill. It runs the same commands below with dry-run by default and prompts at each destructive step.
 >
 > ```bash
 > # Dry run (default — prints commands, deletes nothing)
-> bash .claude/skills/teardown-agent-aks-dev/scripts/teardown-aks-dev.sh
+> bash .claude/skills/teardown-agent-aks-agentid/scripts/teardown-aks-dev.sh
 >
 > # Azure only
-> DRY_RUN=0 bash .claude/skills/teardown-agent-aks-dev/scripts/teardown-aks-dev.sh
+> DRY_RUN=0 bash .claude/skills/teardown-agent-aks-agentid/scripts/teardown-aks-dev.sh
 >
 > # Full teardown (Azure + FIC + opt-in Entra apps)
 > DRY_RUN=0 DELETE_ENTRA=1 \
->   bash .claude/skills/teardown-agent-aks-dev/scripts/teardown-aks-dev.sh
+>   bash .claude/skills/teardown-agent-aks-agentid/scripts/teardown-aks-dev.sh
 > ```
 
 ### 15.1 Order of operations
@@ -696,13 +696,13 @@ Before paying for AKS, you can validate the manifest wiring on a local `kind` cl
 ```bash
 source /tmp/deploy-vars.sh
 export BLUEPRINT_CLIENT_SECRET="<one-shot secret minted only for the smoke test>"
-bash .claude/skills/deploy-agent-aks-dev/scripts/smoke-test-kind.sh
+bash .claude/skills/deploy-agent-aks-agentid/scripts/smoke-test-kind.sh
 
 # Cleanup
-bash .claude/skills/deploy-agent-aks-dev/scripts/smoke-test-kind.sh --cleanup
+bash .claude/skills/deploy-agent-aks-agentid/scripts/smoke-test-kind.sh --cleanup
 ```
 
-Full details: [`smoke-test.md`](../../../.claude/skills/deploy-agent-aks-dev/references/smoke-test.md).
+Full details: [`smoke-test.md`](../../../.claude/skills/deploy-agent-aks-agentid/references/smoke-test.md).
 
 ## Appendix B — Secretless migration from docker-compose
 

@@ -1,13 +1,13 @@
 ---
-name: teardown-agent-aks-dev
-description: 'AI-led teardown of an Entra Agent ID agent deployed to Azure Kubernetes Service by deploy-agent-aks-dev. Use when an engineering team wants to delete the AKS cluster, the resource group (which removes AKS + ACR + Log Analytics + PVCs in one shot), the Federated Identity Credential added to their Blueprint app, and optionally the Entra apps themselves (Client SPA, Agent Identity, Blueprint). Defaults to DRY-RUN so the operator sees exactly what will be deleted before anything is destroyed. Entra-object deletion is opt-in because Blueprints are often shared. Cross-tenant aware (SUBSCRIPTION_TENANT_ID for the RG delete, TENANT_ID for the FIC delete and Entra object cleanup). NOT for ACA deployments (use teardown-agent-aca-dev), NOT for the AWS variant (use teardown-agent-aca-aws), NOT for local docker-compose stacks (use `docker compose down -v`).'
+name: teardown-agent-aks-agentid
+description: 'AI-led teardown of an Entra Agent ID agent deployed to Azure Kubernetes Service by deploy-agent-aks-agentid. Use when an engineering team wants to delete the AKS cluster, the resource group (which removes AKS + ACR + Log Analytics + PVCs in one shot), the Federated Identity Credential added to their Blueprint app, and optionally the Entra apps themselves (Client SPA, Agent Identity, Blueprint). Defaults to DRY-RUN so the operator sees exactly what will be deleted before anything is destroyed. Entra-object deletion is opt-in because Blueprints are often shared. Cross-tenant aware (SUBSCRIPTION_TENANT_ID for the RG delete, TENANT_ID for the FIC delete and Entra object cleanup). NOT for ACA deployments (use teardown-agent-aca-dev), NOT for the AWS variant (use teardown-agent-aca-aws), NOT for local docker-compose stacks (use `docker compose down -v`).'
 ---
 
 # Teardown — Entra Agent ID Agent on AKS (AI-Led)
 
-Reverses the [`deploy-agent-aks-dev`](../deploy-agent-aks-dev/SKILL.md) skill. Deletes the resource group (AKS, ACR, Log Analytics, PVCs), removes the Federated Identity Credential the deploy added to the Blueprint app, and — opt-in — deletes the Entra apps (Client SPA, Agent Identity, Blueprint).
+Reverses the [`deploy-agent-aks-agentid`](../deploy-agent-aks-agentid/SKILL.md) skill. Deletes the resource group (AKS, ACR, Log Analytics, PVCs), removes the Federated Identity Credential the deploy added to the Blueprint app, and — opt-in — deletes the Entra apps (Client SPA, Agent Identity, Blueprint).
 
-**Paired with:** [`deploy-agent-aks-dev`](../deploy-agent-aks-dev/SKILL.md). Uses the same `/tmp/deploy-vars.sh`.
+**Paired with:** [`deploy-agent-aks-agentid`](../deploy-agent-aks-agentid/SKILL.md). Uses the same `/tmp/deploy-vars.sh`.
 
 ## When to Use
 
@@ -83,7 +83,7 @@ The deploy added one FIC to the Blueprint (`name = $FIC_NAME`, `subject = system
 
 ```bash
 TENANT_ID="$TENANT_ID" BLUEPRINT_APP_ID="$BLUEPRINT_APP_ID" FIC_NAME="${FIC_NAME:-aks-agent-sa}" \
-  bash .claude/skills/teardown-agent-aks-dev/scripts/teardown-aks-dev.sh --fic-only
+  bash .claude/skills/teardown-agent-aks-agentid/scripts/teardown-aks-dev.sh --fic-only
 ```
 
 The orchestrator does this automatically in Step 2; the standalone invocation above is for manual triage.
@@ -133,17 +133,17 @@ Single-entry-point script: [`scripts/teardown-aks-dev.sh`](./scripts/teardown-ak
 
 ```bash
 # Dry run (default) — Azure + FIC, no Entra app deletes
-bash .claude/skills/teardown-agent-aks-dev/scripts/teardown-aks-dev.sh
+bash .claude/skills/teardown-agent-aks-agentid/scripts/teardown-aks-dev.sh
 
 # Real teardown — RG + FIC, keep Entra apps
-DRY_RUN=0 bash .claude/skills/teardown-agent-aks-dev/scripts/teardown-aks-dev.sh
+DRY_RUN=0 bash .claude/skills/teardown-agent-aks-agentid/scripts/teardown-aks-dev.sh
 
 # Full teardown — RG + FIC + Entra apps (Client SPA, Agent, Blueprint — each prompted)
 DRY_RUN=0 DELETE_ENTRA=1 \
-  bash .claude/skills/teardown-agent-aks-dev/scripts/teardown-aks-dev.sh
+  bash .claude/skills/teardown-agent-aks-agentid/scripts/teardown-aks-dev.sh
 
 # Just remove the FIC and exit (no RG touch)
-bash .claude/skills/teardown-agent-aks-dev/scripts/teardown-aks-dev.sh --fic-only
+bash .claude/skills/teardown-agent-aks-agentid/scripts/teardown-aks-dev.sh --fic-only
 ```
 
 ## Cross-tenant teardown
@@ -176,5 +176,5 @@ You must be signed in to both before running. The orchestrator fails early with 
 - [Azure — delete resource group](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/delete-resource-group)
 - [Microsoft Graph — federatedIdentityCredentials](https://learn.microsoft.com/en-us/graph/api/application-delete-federatedidentitycredentials)
 - [Microsoft Graph — oauth2PermissionGrant delete](https://learn.microsoft.com/en-us/graph/api/oauth2permissiongrant-delete)
-- [`deploy-agent-aks-dev`](../deploy-agent-aks-dev/SKILL.md) — the deploy skill this reverses
-- [`deploy-agent-aks-dev/references/cross-tenant-federation.md`](../deploy-agent-aks-dev/references/cross-tenant-federation.md) — the two-tenant pattern this teardown supports
+- [`deploy-agent-aks-agentid`](../deploy-agent-aks-agentid/SKILL.md) — the deploy skill this reverses
+- [`deploy-agent-aks-agentid/references/cross-tenant-federation.md`](../deploy-agent-aks-agentid/references/cross-tenant-federation.md) — the two-tenant pattern this teardown supports
