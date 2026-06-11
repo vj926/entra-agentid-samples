@@ -35,16 +35,15 @@ One federation chain — Kubernetes ServiceAccount → Blueprint app. **No clien
    - `az` ≥ 2.60 with `aks-preview` extension (`az extension add --name aks-preview`)
    - `kubectl` ≥ 1.28
    - `pwsh` 7.4+ with `Microsoft.Graph.Authentication` (`Install-Module Microsoft.Graph.Authentication -Scope CurrentUser`)
-   - `envsubst` (from the `gettext` package; on Windows comes with Git Bash)
    - Optional for local smoke test: Docker Desktop + `kind` ≥ 0.20
    - Optional for "Adapt for your own agent": a container image of the user's agent in any registry reachable by AKS
 4. **Tenant + subscription confirmed with the user.** ALWAYS confirm before any `az` command that mutates resources. Users frequently have multiple tenants; pick the wrong one and you create a half-deployed cluster in the wrong place.
 5. **Entra Agent ID base objects exist** — Blueprint, Agent Identity, and (for OBO) a Client SPA. If not, chain `entra-agent-id-setup` first.
 6. **Resource providers registered** on first use of a fresh subscription:
-   `Microsoft.ContainerService`, `Microsoft.ContainerRegistry`, `Microsoft.Compute`, `Microsoft.Network`, `Microsoft.Storage`, `Microsoft.OperationalInsights`, `Microsoft.OperationsManagement`. `01-create-aks.sh` checks and registers what's missing.
+   `Microsoft.ContainerService`, `Microsoft.ContainerRegistry`, `Microsoft.Compute`, `Microsoft.Network`, `Microsoft.Storage`, `Microsoft.OperationalInsights`, `Microsoft.OperationsManagement`. `01-create-aks.ps1` checks and registers what's missing.
 
 > [!NOTE]
-> **Windows / PowerShell users:** the orchestrator and scripts are bash + `pwsh`. Run them from **Git Bash** or **WSL**, not raw PowerShell — `source`, `envsubst`, and curl-style heredocs do not have native PowerShell equivalents.
+> **All scripts are PowerShell (pwsh 7.4+).** Run them with `pwsh -NoProfile -File <script>.ps1` or directly in a `pwsh` session. No bash, no `envsubst`, no Git Bash required.
 
 > [!NOTE]
 > **Cross-tenant deployment** (the Azure subscription lives in tenant A while the Entra Agent ID objects live in tenant B) is supported. Set `SUBSCRIPTION_TENANT_ID` in `/tmp/deploy-vars.sh`. Full pattern: [references/cross-tenant-federation.md](./references/cross-tenant-federation.md). Default behavior is single-tenant.
@@ -71,13 +70,14 @@ The procedure is built for the included `sidecar/dev` sample. If you're bringing
 
 ### Step 0 — Confirm account and populate variables
 
-```bash
-cp .claude/skills/deploy-agent-aks-agentid/scripts/deploy-vars.sh.template /tmp/deploy-vars.sh
-# Edit /tmp/deploy-vars.sh: fill in TENANT_ID, SUBSCRIPTION_ID, RG, LOCATION, SKUs.
-source /tmp/deploy-vars.sh
+```powershell
+cp .claude/skills/deploy-agent-aks-agentid/scripts/deploy-vars.ps1.template ~/deploy-vars.ps1
+# Edit ~/deploy-vars.ps1: fill in TENANT_ID, SUBSCRIPTION_ID, RG, LOCATION, SKUs.
+$env:VARS_FILE = "$HOME/deploy-vars.ps1"
+. $env:VARS_FILE
 
-az login --tenant "${SUBSCRIPTION_TENANT_ID:-$TENANT_ID}"
-az account set --subscription "$SUBSCRIPTION_ID"
+az login --tenant ($env:SUBSCRIPTION_TENANT_ID ?? $env:TENANT_ID)
+az account set --subscription $env:SUBSCRIPTION_ID
 az account show --query '{name:name, id:id, tenantId:tenantId}' -o table
 ```
 
@@ -85,16 +85,16 @@ Stop and confirm with the user before proceeding. Wrong-tenant deployments are t
 
 ### Step 1 — Create Entra Agent ID base objects
 
-Delegate to [`entra-agent-id-setup`](../entra-agent-id-setup/SKILL.md). Capture `BLUEPRINT_APP_ID`, `AGENT_CLIENT_ID`, and (for OBO) `CLIENT_SPA_APP_ID` into `/tmp/deploy-vars.sh`.
+Delegate to [`entra-agent-id-setup`](../entra-agent-id-setup/SKILL.md). Capture `BLUEPRINT_APP_ID`, `AGENT_CLIENT_ID`, and (for OBO) `CLIENT_SPA_APP_ID` into your `deploy-vars.ps1`.
 
 Then configure the Blueprint for OBO (sets `identifierUris`, adds the `access_as_user` scope, pre-authorizes the Client SPA, and pre-grants admin consent — all idempotent):
 
-```bash
-pwsh -NoProfile -File .claude/skills/deploy-agent-aks-agentid/scripts/setup-obo-blueprint-for-aks.ps1 \
-  -BlueprintAppId "$BLUEPRINT_APP_ID" \
-  -ClientSpaAppId "$CLIENT_SPA_APP_ID" \
-  -AgentAppId    "$AGENT_CLIENT_ID" \
-  -TenantId      "$TENANT_ID"
+```powershell
+pwsh -NoProfile -File .claude/skills/deploy-agent-aks-agentid/scripts/setup-obo-blueprint-for-aks.ps1 `
+  -BlueprintAppId $env:BLUEPRINT_APP_ID `
+  -ClientSpaAppId $env:CLIENT_SPA_APP_ID `
+  -AgentAppId     $env:AGENT_CLIENT_ID `
+  -TenantId       $env:TENANT_ID
 ```
 
 Skip this script if the deployment is autonomous-only (no user sign-in). It's safe to run twice; subsequent runs are no-ops.
@@ -103,16 +103,16 @@ Skip this script if the deployment is autonomous-only (no user sign-in). It's sa
 
 Validate every manifest against a real Kubernetes API server with no Azure cost. The smoke test uses `ClientSecret` for the sidecar (matches the upstream docker-compose), so no federation is required.
 
-```bash
-bash .claude/skills/deploy-agent-aks-agentid/scripts/smoke-test-kind.sh
+```powershell
+pwsh -NoProfile -File .claude/skills/deploy-agent-aks-agentid/scripts/smoke-test-kind.ps1
 ```
 
 What it covers and what it doesn't: [references/smoke-test.md](./references/smoke-test.md). Output is one line — `SMOKE PASS` or `SMOKE FAIL: <reason>`. **Do this before Step 2** unless you're already comfortable with the manifests.
 
 ### Step 2 — Azure infrastructure (RG + ACR + AKS with OIDC + Workload Identity)
 
-```bash
-bash .claude/skills/deploy-agent-aks-agentid/scripts/01-create-aks.sh
+```powershell
+pwsh -NoProfile -File .claude/skills/deploy-agent-aks-agentid/scripts/01-create-aks.ps1
 ```
 
 Creates:
@@ -127,12 +127,12 @@ Creates:
 
 ### Step 3 — Federate the KSA to the Blueprint app (the only federation chain)
 
-```bash
-pwsh -NoProfile -File .claude/skills/deploy-agent-aks-agentid/scripts/03-federate-blueprint.ps1 \
-  -TenantId       "$TENANT_ID" \
-  -BlueprintAppId "$BLUEPRINT_APP_ID" \
-  -OidcIssuerUrl  "$OIDC_ISSUER" \
-  -FicName        "${FIC_NAME:-aks-agent-sa}"
+```powershell
+pwsh -NoProfile -File .claude/skills/deploy-agent-aks-agentid/scripts/03-federate-blueprint.ps1 `
+  -TenantId       $env:TENANT_ID `
+  -BlueprintAppId $env:BLUEPRINT_APP_ID `
+  -OidcIssuerUrl  $env:OIDC_ISSUER `
+  -FicName        ($env:FIC_NAME ?? "aks-agent-sa")
 ```
 
 Adds one Federated Identity Credential on the Blueprint app:
@@ -144,19 +144,19 @@ Adds one Federated Identity Credential on the Blueprint app:
 
 ### Step 4 — Build and push container images
 
-```bash
-bash .claude/skills/deploy-agent-aks-agentid/scripts/02-build-and-push.sh
+```powershell
+pwsh -NoProfile -File .claude/skills/deploy-agent-aks-agentid/scripts/02-build-and-push.ps1
 ```
 
-`az acr build` for `llm-agent` and `weather-api`. **No local Docker required.** Ollama uses the upstream `ollama/ollama:latest` image as-is — the model is fetched by an initContainer on first pod start and persisted in a PVC. If your tenant has an Azure Policy blocking public Docker Hub pulls, pre-import: `az acr import --name "$ACR_NAME" --source docker.io/ollama/ollama:latest` and update `30-ollama.yaml` to reference the ACR copy.
+`az acr build` for `llm-agent` and `weather-api`. **No local Docker required.** Ollama uses the upstream `ollama/ollama:latest` image as-is — the model is fetched by an initContainer on first pod start and persisted in a PVC. If your tenant has an Azure Policy blocking public Docker Hub pulls, pre-import: `az acr import --name $env:ACR_NAME --source docker.io/ollama/ollama:latest` and update `30-ollama.yaml` to reference the ACR copy.
 
 ### Step 5 — Apply manifests
 
-```bash
-bash .claude/skills/deploy-agent-aks-agentid/scripts/04-apply-manifests.sh
+```powershell
+pwsh -NoProfile -File .claude/skills/deploy-agent-aks-agentid/scripts/04-apply-manifests.ps1
 ```
 
-Renders `manifests/*.yaml` through `envsubst` (with an **explicit varlist** — `$TENANT_ID $BLUEPRINT_APP_ID $AGENT_CLIENT_ID $ACR_NAME $OLLAMA_MODEL $CLIENT_SPA_APP_ID` — to avoid clobbering shell variables like `$PID` inside init scripts), then `kubectl apply -f -`, then `kubectl rollout status` per Deployment, and finally waits for the LoadBalancer external IP. Captures `APP_FQDN=<LB-IP>` into `/tmp/deploy-vars.sh`.
+Renders `manifests/*.yaml` using PowerShell string substitution (explicit variable list: `TENANT_ID`, `BLUEPRINT_APP_ID`, `AGENT_CLIENT_ID`, `ACR_NAME`, `OLLAMA_MODEL`, `CLIENT_SPA_APP_ID`), then `kubectl apply` per manifest, then `kubectl rollout status` per Deployment, and finally waits for the LoadBalancer external IP.
 
 ### Step 6 — Post-deploy wiring (REQUIRED — execute immediately after Step 5)
 
@@ -165,26 +165,26 @@ Renders `manifests/*.yaml` through `envsubst` (with an **explicit varlist** — 
 
 1. **Add SPA redirect URIs.** Registers `http://localhost:8080/` (required for OBO — see sub-step 3) and, if `APP_FQDN` is set, also `http://$APP_FQDN/`:
 
-   ```bash
-   APP_FQDN="$APP_FQDN" \
-     bash .claude/skills/deploy-agent-aks-agentid/scripts/add-spa-redirect-uri.sh
+   ```powershell
+   $env:APP_FQDN = $env:APP_FQDN   # already set if 04-apply-manifests.ps1 ran
+   pwsh -NoProfile -File .claude/skills/deploy-agent-aks-agentid/scripts/add-spa-redirect-uri.ps1
    ```
 
 2. **Grant Agent → Graph delegated `User.Read`** (fixes `AADSTS65001` on OBO):
 
-   ```bash
-   pwsh -NoProfile -File .claude/skills/deploy-agent-aks-agentid/scripts/grant-agent-obo-consent.ps1 \
-     -AgentAppId "$AGENT_CLIENT_ID" -TenantId "$TENANT_ID"
+   ```powershell
+   pwsh -NoProfile -File .claude/skills/deploy-agent-aks-agentid/scripts/grant-agent-obo-consent.ps1 `
+     -AgentAppId $env:AGENT_CLIENT_ID -TenantId $env:TENANT_ID
    ```
 
 3. **Use port-forward for OBO sign-in.** The LoadBalancer is plain HTTP, which browsers refuse to treat as a "secure context" — MSAL's PKCE flow needs `crypto.subtle`, which is gated on secure-context, so the sign-in popup never opens on `http://<LB-IP>`. Loopback is exempt:
 
-   ```bash
-   bash .claude/skills/deploy-agent-aks-agentid/scripts/port-forward.sh
+   ```powershell
+   pwsh -NoProfile -File .claude/skills/deploy-agent-aks-agentid/scripts/port-forward.ps1
    # browser:  http://localhost:8080  → click "Sign In"
    ```
 
-   Autonomous (no-sign-in) mode works fine on the raw `http://$APP_FQDN/` without port-forward.
+   Autonomous (no-sign-in) mode works fine on the raw `http://$env:APP_FQDN/` without port-forward.
 
 ### Step 7 — Verify
 
@@ -248,16 +248,17 @@ What you do NOT need to change: the FIC, the sidecar image, the KSA annotations,
 
 When prereqs are met and SKU variables confirmed:
 
-```bash
-source /tmp/deploy-vars.sh
-bash .claude/skills/deploy-agent-aks-agentid/scripts/deploy-aks-dev.sh
+```powershell
+$env:VARS_FILE = "$HOME/deploy-vars.ps1"
+. $env:VARS_FILE
+pwsh -NoProfile -File .claude/skills/deploy-agent-aks-agentid/scripts/deploy-aks-dev.ps1
 ```
 
 Idempotent. Runs Steps 2 → 5 in order. Steps 0, 1, A, 6 require human decisions or interactive sign-in and remain manual.
 
 ## Key Artifacts
 
-Persisted in `/tmp/deploy-vars.sh`:
+Persisted in your `deploy-vars.ps1`:
 
 | Variable | Source | Required? |
 |---|---|---|

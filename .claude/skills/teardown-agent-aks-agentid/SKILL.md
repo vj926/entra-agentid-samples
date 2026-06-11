@@ -33,17 +33,17 @@ Reverses the [`deploy-agent-aks-agentid`](../deploy-agent-aks-agentid/SKILL.md) 
 
 ## Prerequisites
 
-1. `/tmp/deploy-vars.sh` from the original deployment (at minimum `SUBSCRIPTION_ID`, `RG`, `TENANT_ID`, `BLUEPRINT_APP_ID`; `FIC_NAME`, `AGENT_CLIENT_ID`, `CLIENT_SPA_APP_ID` if cleaning those).
+1. Your `deploy-vars.ps1` from the original deployment (at minimum `SUBSCRIPTION_ID`, `RG`, `TENANT_ID`, `BLUEPRINT_APP_ID`; `FIC_NAME`, `AGENT_CLIENT_ID`, `CLIENT_SPA_APP_ID` if cleaning those).
 2. `az` logged in to **both** tenants if this was a cross-tenant deploy:
-   ```bash
-   az login --tenant "${SUBSCRIPTION_TENANT_ID:-$TENANT_ID}"   # for RG delete
-   az login --tenant "$TENANT_ID"                              # for FIC delete + Entra cleanup
+   ```powershell
+   az login --tenant ($env:SUBSCRIPTION_TENANT_ID ?? $env:TENANT_ID)   # for RG delete
+   az login --tenant $env:TENANT_ID                                     # for FIC delete + Entra cleanup
    ```
    Single-tenant deploys need only one login.
 3. **Graph role**:
    - FIC delete needs `Application.ReadWrite.OwnedBy` (own the Blueprint) or `Application.ReadWrite.All`.
-   - `DELETE_ENTRA=1` additionally needs `Application Administrator` or higher on the apps you're deleting.
-4. `pwsh` 7.4+ if running the FIC delete via the `Microsoft.Graph.Authentication` PowerShell path (the orchestrator falls back to `az rest` when `pwsh` isn't available).
+   - `-DeleteEntra` additionally needs `Application Administrator` or higher on the apps you're deleting.
+4. `pwsh` 7.4+ with `Microsoft.Graph.Authentication` (`Install-Module Microsoft.Graph.Authentication -Scope CurrentUser`).
 
 ## Procedure
 
@@ -62,88 +62,72 @@ Teardown plan (AKS / Entra Agent ID):
 Proceed? [y/N]
 ```
 
-### Step 1 — Revoke OAuth consent grants on the Agent SP
+### Step 1 — Remove SPA redirect URIs and revoke OAuth consent grants
 
-Even if you keep the Agent Identity, revoke any user-consent grants so a redeploy starts clean (and so a stale `User.Read` admin-consent isn't left behind on a destroyed cluster).
-
-```bash
-AGENT_SP_OID=$(az ad sp show --id "$AGENT_CLIENT_ID" --query id -o tsv 2>/dev/null || true)
-if [[ -n "$AGENT_SP_OID" ]]; then
-  az rest --method GET \
-    --uri "https://graph.microsoft.com/v1.0/oauth2PermissionGrants?\$filter=clientId eq '$AGENT_SP_OID'" \
-    --query 'value[].id' -o tsv | while read -r g; do
-      az rest --method DELETE --uri "https://graph.microsoft.com/v1.0/oauth2PermissionGrants/$g"
-  done
-fi
-```
+Removes the `http://localhost:8080/` and `http://$APP_FQDN/` URIs added by `add-spa-redirect-uri.ps1`, and revokes any `User.Read` admin-consent grants so a redeploy starts clean.
 
 ### Step 2 — Delete the Federated Identity Credential on the Blueprint
 
 The deploy added one FIC to the Blueprint (`name = $FIC_NAME`, `subject = system:serviceaccount:agentid:agent-sa`). Remove it so the Blueprint isn't left trusting an OIDC issuer that no longer exists:
 
-```bash
-TENANT_ID="$TENANT_ID" BLUEPRINT_APP_ID="$BLUEPRINT_APP_ID" FIC_NAME="${FIC_NAME:-aks-agent-sa}" \
-  bash .claude/skills/teardown-agent-aks-agentid/scripts/teardown-aks-dev.sh --fic-only
+```powershell
+$env:VARS_FILE = "$HOME/deploy-vars.ps1"
+pwsh -NoProfile -File .claude/skills/teardown-agent-aks-agentid/scripts/teardown-aks-dev.ps1 -FicOnly
 ```
 
-The orchestrator does this automatically in Step 2; the standalone invocation above is for manual triage.
+The orchestrator does this automatically in Step 3; the `-FicOnly` invocation above is for manual triage.
 
 ### Step 3 — Delete the resource group
 
-```bash
-az group delete --name "$RG" --yes --no-wait
+```powershell
+az group delete --name $env:RG --yes --no-wait
 ```
 
 This removes, in one shot:
-- The AKS cluster (`$AKS_NAME`)
-- The ACR (`$ACR_NAME`) and every image in it
+- The AKS cluster (`$env:AKS_NAME`)
+- The ACR (`$env:ACR_NAME`) and every image in it
 - The system-assigned managed identity AKS provisioned for the kubelet
 - Any PVCs (Ollama models) and their backing disks
-- The Log Analytics workspace if `ENABLE_LOGS=azure-monitor-container-insights` and it was created in `$RG`
+- The Log Analytics workspace if `ENABLE_LOGS=azure-monitor-container-insights` and it was created in `$env:RG`
 - The Standard LB and its public IP
 
 > [!NOTE]
 > Log Analytics workspaces are sometimes pinned to a different RG by tenant policy. If `az group delete` succeeds but `az monitor log-analytics workspace show` still finds yours, delete it manually.
 
-### Step 4 — Delete Entra objects (opt-in: `DELETE_ENTRA=1`)
+### Step 4 — Delete Entra objects (opt-in: `-DeleteEntra`)
 
 Asked **per object**, in order, lowest-blast-radius first:
 
 1. **Client SPA** (`CLIENT_SPA_APP_ID`) — usually safe; created per-deployment.
-2. **Agent Identity** — delete via the Agent ID portal or Graph (`DELETE /agentIdentities/{id}`).
+2. **Agent Identity** — deleted via Graph beta `/agentIdentities/{id}`.
 3. **Blueprint** (`BLUEPRINT_APP_ID`) — **PROMPT AGAIN.** Often shared across agents. Deleting a shared Blueprint breaks every other agent that federates against it.
-
-```bash
-az ad app delete --id "$CLIENT_SPA_APP_ID" 2>/dev/null || true
-# Agent + Blueprint: prompt explicitly first, then call Graph
-```
 
 ### Step 5 — Verify
 
-```bash
-az group exists --name "$RG"                                      # expect: false
-az ad app federated-credential list --id "$BLUEPRINT_APP_ID" \
-  --query "[?name=='$FIC_NAME']" -o tsv                           # expect: empty
-az ad app show --id "$CLIENT_SPA_APP_ID" 2>&1 | head -1           # expect: "not found" (if DELETE_ENTRA=1)
+```powershell
+az group exists --name $env:RG                                                      # expect: false
+az ad app federated-credential list --id $env:BLUEPRINT_APP_ID `
+  --query "[?name=='$env:FIC_NAME']" -o tsv                                          # expect: empty
+az ad app show --id $env:CLIENT_SPA_APP_ID 2>&1 | Select-Object -First 1            # expect: "not found" (if -DeleteEntra)
 ```
 
 ## One-Shot Orchestrator
 
-Single-entry-point script: [`scripts/teardown-aks-dev.sh`](./scripts/teardown-aks-dev.sh).
+Single-entry-point script: [`scripts/teardown-aks-dev.ps1`](./scripts/teardown-aks-dev.ps1).
 
-```bash
-# Dry run (default) — Azure + FIC, no Entra app deletes
-bash .claude/skills/teardown-agent-aks-agentid/scripts/teardown-aks-dev.sh
+```powershell
+# Dry run (default) — prints all commands, deletes nothing
+$env:VARS_FILE = "$HOME/deploy-vars.ps1"
+pwsh -NoProfile -File .claude/skills/teardown-agent-aks-agentid/scripts/teardown-aks-dev.ps1
 
-# Real teardown — RG + FIC, keep Entra apps
-DRY_RUN=0 bash .claude/skills/teardown-agent-aks-agentid/scripts/teardown-aks-dev.sh
+# Real teardown — RG + FIC + SPA URIs + OAuth grants, keep Entra apps
+pwsh -NoProfile -File .claude/skills/teardown-agent-aks-agentid/scripts/teardown-aks-dev.ps1 -DryRun:$false
 
-# Full teardown — RG + FIC + Entra apps (Client SPA, Agent, Blueprint — each prompted)
-DRY_RUN=0 DELETE_ENTRA=1 \
-  bash .claude/skills/teardown-agent-aks-agentid/scripts/teardown-aks-dev.sh
+# Full teardown — everything above + Entra apps (Client SPA, Agent, Blueprint — each prompted)
+pwsh -NoProfile -File .claude/skills/teardown-agent-aks-agentid/scripts/teardown-aks-dev.ps1 -DryRun:$false -DeleteEntra
 
 # Just remove the FIC and exit (no RG touch)
-bash .claude/skills/teardown-agent-aks-agentid/scripts/teardown-aks-dev.sh --fic-only
+pwsh -NoProfile -File .claude/skills/teardown-agent-aks-agentid/scripts/teardown-aks-dev.ps1 -FicOnly
 ```
 
 ## Cross-tenant teardown

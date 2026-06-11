@@ -440,18 +440,13 @@ The full manifest set lives in [`.claude/skills/deploy-agent-aks-agentid/manifes
 
 ### 9.1 Render and apply
 
-```bash
-set -a; source /tmp/deploy-vars.sh; set +a    # auto-export every variable
+```powershell
+. ~/deploy-vars.ps1
 
-MANIFEST_DIR=".claude/skills/deploy-agent-aks-agentid/manifests"
-
-# Render with explicit varlist so typos fail loudly instead of producing empty strings
-VARLIST='$TENANT_ID $BLUEPRINT_APP_ID $AGENT_CLIENT_ID $CLIENT_SPA_APP_ID $ACR_NAME $OLLAMA_MODEL $STORAGE_GB'
-
-for f in "$MANIFEST_DIR"/*.yaml; do
-  envsubst "$VARLIST" < "$f"
-done | kubectl apply -f -
+pwsh -NoProfile -File .claude/skills/deploy-agent-aks-agentid/scripts/04-apply-manifests.ps1
 ```
+
+The script reads `manifests/*.yaml`, substitutes `$TENANT_ID`, `$BLUEPRINT_APP_ID`, `$AGENT_CLIENT_ID`, `$CLIENT_SPA_APP_ID`, `$ACR_NAME`, `$OLLAMA_MODEL`, and applies each manifest in order. It handles only the explicit variable list — other `$` tokens in the manifests are left unchanged.
 
 The manifests create, in order:
 
@@ -484,8 +479,8 @@ Two manual steps that can't be done before the cluster exists.
 
 ### 10.1 Add the LoadBalancer IP to the Client SPA redirect URIs
 
-```bash
-bash .claude/skills/deploy-agent-aks-agentid/scripts/add-spa-redirect-uri.sh
+```powershell
+pwsh -NoProfile -File .claude/skills/deploy-agent-aks-agentid/scripts/add-spa-redirect-uri.ps1
 ```
 
 The script PATCHes `spa.redirectUris` on the Client SPA app directly via Graph. It always adds `http://localhost:8080/` (used for the port-forward sign-in path in [§11.4](#114-obo-flow-via-port-forward)) and additionally adds `http://${APP_FQDN}/` if `APP_FQDN` is set. `az ad app update --web-redirect-uris` does **not** affect SPA redirect URIs — that's why this is a Graph PATCH.
@@ -582,13 +577,13 @@ There is no AWS or GCP rotation — because there is no AWS or GCP.
 | Agent answers ignore the tool ("here's a generic forecast") | LLM-driven tool calling on small CPU node — small models hallucinate tool decisions | Use **⚡ Direct** mode to verify the auth chain; bump to D8s_v5 + 7B, GPU pool, or Azure OpenAI for reliable Ollama tool calling. |
 | OBO sign-in popup throws `pkce_not_created: TypeError: Cannot read properties of undefined (reading 'subtle')` | Browser refuses `crypto.subtle` on non-secure context | Use `kubectl port-forward` and load `http://localhost:8080`. |
 | `AADSTS65001` on browser OBO sign-in | Missing delegated `User.Read` admin consent | Run `grant-agent-obo-consent.ps1` (see [§5.4](#54-admin-consent-the-agents-delegated-graph-permission)). |
-| `AADSTS50011: redirect URI mismatch` | Deployed URL (or `http://localhost:8080`) not in SPA `redirectUris` | Run `add-spa-redirect-uri.sh` (see [§10.1](#101-add-the-loadbalancer-ip-to-the-client-spa-redirect-uris)). |
+| `AADSTS50011: redirect URI mismatch` | Deployed URL (or `http://localhost:8080`) not in SPA `redirectUris` | Run `add-spa-redirect-uri.ps1` (see [§10.1](#101-add-the-loadbalancer-ip-to-the-client-spa-redirect-uris)). |
 | Graph `$filter=appId eq` returns empty for Blueprint | Agent Identity Blueprint types invisible to `$filter` | Use key-lookup form `/beta/applications(appId='<id>')` — the scripts in this skill already do this. |
 | `403 Authorization_RequestDenied` on Blueprint create | Signing-in user has only `Application Administrator`, not an Agent ID role | Assign `Agent ID Developer` or `Agent ID Administrator`. |
 | Cross-tenant: FIC was added but sidecar still hits `AADSTS70021` | FIC accidentally added to a Blueprint **in the wrong tenant** | Run `Connect-MgGraph -TenantId $TENANT_ID` explicitly before the Graph PATCH. Delete the wrong FIC, recreate in the Blueprint tenant. |
 | LB IP stays `<pending>` for >5 min | Subscription LB quota exhausted or policy blocks public IPs | Switch `INGRESS_TYPE` to `ingress-nginx` and use an internal LB or an Application Gateway. |
 | Pod `ImagePullBackOff` | ACR not attached to AKS, or wrong image name | `az aks update --attach-acr $ACR_NAME`; double-check the manifest image refs match `$ACR_NAME.azurecr.io/agent-id-dev/...:1.0.0`. |
-| Rendered manifest still contains `$TENANT_ID` literal | `envsubst` ran without exported vars | `set -a; source /tmp/deploy-vars.sh; set +a` before rendering, or use the explicit varlist form shown in [§9.1](#91-render-and-apply). |
+| Rendered manifest still contains `$TENANT_ID` literal | PS string substitution didn't run | Ensure all required `$env:` vars are set before running `04-apply-manifests.ps1`. |
 
 ### 13.1 Diagnostic one-liners
 
@@ -631,16 +626,16 @@ kubectl -n agentid exec deploy/ollama -- ollama list
 
 > **TIP — AI-assisted teardown.** If you use Claude Code or GitHub Copilot, invoke the [`teardown-agent-aks-agentid`](../../../.claude/skills/teardown-agent-aks-agentid/SKILL.md) skill. It runs the same commands below with dry-run by default and prompts at each destructive step.
 >
-> ```bash
+> ```powershell
 > # Dry run (default — prints commands, deletes nothing)
-> bash .claude/skills/teardown-agent-aks-agentid/scripts/teardown-aks-dev.sh
+> $env:VARS_FILE = "$HOME/deploy-vars.ps1"
+> pwsh -NoProfile -File .claude/skills/teardown-agent-aks-agentid/scripts/teardown-aks-dev.ps1
 >
-> # Azure only
-> DRY_RUN=0 bash .claude/skills/teardown-agent-aks-agentid/scripts/teardown-aks-dev.sh
+> # Azure + FIC + SPA URI cleanup only
+> pwsh -NoProfile -File .claude/skills/teardown-agent-aks-agentid/scripts/teardown-aks-dev.ps1 -DryRun:$false
 >
 > # Full teardown (Azure + FIC + opt-in Entra apps)
-> DRY_RUN=0 DELETE_ENTRA=1 \
->   bash .claude/skills/teardown-agent-aks-agentid/scripts/teardown-aks-dev.sh
+> pwsh -NoProfile -File .claude/skills/teardown-agent-aks-agentid/scripts/teardown-aks-dev.ps1 -DryRun:$false -DeleteEntra
 > ```
 
 ### 15.1 Order of operations
@@ -693,13 +688,13 @@ az rest --method GET --url "https://graph.microsoft.com/beta/applications(appId=
 
 Before paying for AKS, you can validate the manifest wiring on a local `kind` cluster. The smoke test substitutes `SignedAssertionFilePath` (which needs an Entra-trusted OIDC issuer) with `ClientSecret`, so it does not exercise the federation chain — but it catches typos in the manifests, image build problems, and pod startup issues.
 
-```bash
-source /tmp/deploy-vars.sh
-export BLUEPRINT_CLIENT_SECRET="<one-shot secret minted only for the smoke test>"
-bash .claude/skills/deploy-agent-aks-agentid/scripts/smoke-test-kind.sh
+```powershell
+. ~/deploy-vars.ps1
+$env:BLUEPRINT_CLIENT_SECRET = "<one-shot secret minted only for the smoke test>"
+pwsh -NoProfile -File .claude/skills/deploy-agent-aks-agentid/scripts/smoke-test-kind.ps1
 
 # Cleanup
-bash .claude/skills/deploy-agent-aks-agentid/scripts/smoke-test-kind.sh --cleanup
+pwsh -NoProfile -File .claude/skills/deploy-agent-aks-agentid/scripts/smoke-test-kind.ps1 --cleanup
 ```
 
 Full details: [`smoke-test.md`](../../../.claude/skills/deploy-agent-aks-agentid/references/smoke-test.md).
