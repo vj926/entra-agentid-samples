@@ -29,9 +29,9 @@ After completing this skill the customer will have:
 2. **Existing Blueprint + Agent Identity apps.** If the customer doesn't have these yet, run [`entra-agent-id-setup`](../entra-agent-id-setup/SKILL.md) first to mint them.
 3. **Blueprint must hold the Graph application role** `AgentIdUser.ReadWrite.IdentityParentedBy` (roleId `4aa6e624-eee0-40ab-bdd8-f9639038a614`). Required so the Blueprint can create the `microsoft.graph.agentUser` parented to the Agent Identity. Preflight verifies this.
 4. **Azure subscription** with permission to create a resource group, ACR, and AKS cluster. Quota for ~2 `Standard_D2s_v5` nodes.
-5. `pwsh` 7.x, `az` CLI, `kubectl`, `bash`, and either WSL or Linux/macOS for the bash scripts.
+5. `pwsh` 7.x, `az` CLI, and `kubectl`. All scripts are PowerShell — no bash required.
 
-> **Cross-tenant deployment** (Azure subscription in tenant A, Entra Agent ID objects in tenant B) is supported. Set `SUBSCRIPTION_TENANT_ID` in `/tmp/deploy-vars.sh`. Default behavior is single-tenant.
+> **Cross-tenant deployment** (Azure subscription in tenant A, Entra Agent ID objects in tenant B) is supported. Set `$env:SUBSCRIPTION_TENANT_ID` in your `deploy-vars.ps1`. Default behavior is single-tenant.
 
 ## Architecture (what the SDK actually does for you)
 ```
@@ -120,29 +120,30 @@ pwsh -NoProfile -File .claude/skills/deploy-agent-aks-auid/scripts/04-register-w
 ## Phase 2 — Deploy to AKS
 
 ### Step 2.1 — Fill in deploy-vars
-```bash
-cp .claude/skills/deploy-agent-aks-auid/deploy/aks/scripts/deploy-vars.sh.template /tmp/deploy-vars.sh
-# Edit /tmp/deploy-vars.sh — set:
+```powershell
+cp .claude/skills/deploy-agent-aks-auid/deploy/aks/scripts/deploy-vars.ps1.template ~/deploy-vars-auid.ps1
+# Edit ~/deploy-vars-auid.ps1 — set:
 #   TENANT_ID, SUBSCRIPTION_ID, RG, LOCATION, AKS_NAME, ACR_NAME (globally unique),
 #   BLUEPRINT_APP_ID, AGENT_IDENTITY_APP_ID,
 #   AGENT_USER_UPN, AGENT_USER_OBJECT_ID  (from Step 1.1),
 #   WEATHER_AGENT_APP_ID, WEATHER_AGENT_APP_ID_URI  (from Step 1.3)
+$env:VARS_FILE = "$HOME/deploy-vars-auid.ps1"
 ```
 
 ### Step 2.2 — Run the orchestrator
-```bash
-source /tmp/deploy-vars.sh
-az login --tenant "${SUBSCRIPTION_TENANT_ID:-$TENANT_ID}"
-az account set --subscription "$SUBSCRIPTION_ID"
+```powershell
+. $env:VARS_FILE
+az login --tenant ($env:SUBSCRIPTION_TENANT_ID ?? $env:TENANT_ID)
+az account set --subscription $env:SUBSCRIPTION_ID
 
-bash .claude/skills/deploy-agent-aks-auid/deploy/aks/scripts/deploy-aks-dev.sh
+pwsh -NoProfile -File .claude/skills/deploy-agent-aks-auid/deploy/aks/scripts/deploy-aks-dev.ps1
 ```
 
 The orchestrator does:
-1. [`01-create-aks.sh`](./deploy/aks/scripts/01-create-aks.sh) — RG + ACR + AKS (OIDC issuer + Workload Identity on, attach-acr). Appends `OIDC_ISSUER` to deploy-vars.
-2. [`02-build-and-push.sh`](./deploy/aks/scripts/02-build-and-push.sh) — `az acr build` for `backend`, `weather-agent`, `ui`.
+1. [`01-create-aks.ps1`](./deploy/aks/scripts/01-create-aks.ps1) — RG + ACR + AKS (OIDC issuer + Workload Identity on, attach-acr). Appends `OIDC_ISSUER` to deploy-vars.
+2. [`02-build-and-push.ps1`](./deploy/aks/scripts/02-build-and-push.ps1) — `az acr build` for `backend`, `weather-agent`, `ui`.
 3. [`03-federate-blueprint.ps1`](./deploy/aks/scripts/03-federate-blueprint.ps1) — adds the FIC `system:serviceaccount:auid:backend-sa` to the Blueprint app (audience `api://AzureADTokenExchange`).
-4. [`04-apply-manifests.sh`](./deploy/aks/scripts/04-apply-manifests.sh) — `envsubst` + `kubectl apply` for [`00-namespace`](./deploy/aks/manifests/00-namespace.yaml), [`10-serviceaccount`](./deploy/aks/manifests/10-serviceaccount.yaml), [`20-weather-agent`](./deploy/aks/manifests/20-weather-agent.yaml), [`30-ui`](./deploy/aks/manifests/30-ui.yaml) (LoadBalancer), [`40-backend`](./deploy/aks/manifests/40-backend.yaml) (broker + `mcr.microsoft.com/entra-sdk/auth-sidecar` co-located in the same pod).
+4. [`04-apply-manifests.ps1`](./deploy/aks/scripts/04-apply-manifests.ps1) — PowerShell string substitution + `kubectl apply` for [`00-namespace`](./deploy/aks/manifests/00-namespace.yaml), [`10-serviceaccount`](./deploy/aks/manifests/10-serviceaccount.yaml), [`20-weather-agent`](./deploy/aks/manifests/20-weather-agent.yaml), [`30-ui`](./deploy/aks/manifests/30-ui.yaml) (LoadBalancer), [`40-backend`](./deploy/aks/manifests/40-backend.yaml) (broker + `mcr.microsoft.com/entra-sdk/auth-sidecar` co-located in the same pod).
 
 When the LB IP is assigned, open `http://<lb-ip>/` and click through the 4-step demo. Step 3 calls the sidecar (which performs the full Blueprint→AgentID→user_fic chain internally and returns the AUID Authorization header); step 4 hits the Weather Agent and shows the validated AUID claims.
 
@@ -150,7 +151,7 @@ When the LB IP is assigned, open `http://<lb-ip>/` and click through the 4-step 
 
 ## Phase 3 — Smoke-test the AUID acquisition
 
-```bash
+```powershell
 kubectl get pods -n auid
 
 # Sidecar logs — look for "Acquired token for downstream API 'weather'"
@@ -160,8 +161,8 @@ kubectl logs -n auid -l app=backend -c sidecar --tail=80
 kubectl logs -n auid -l app=backend -c backend --tail=80
 
 # Hit the broker's step-03 endpoint from inside the pod:
-kubectl exec -n auid deploy/backend -c backend -- \
-  curl -s -X POST http://localhost:8080/api/step/03-auid-token | head -c 800
+kubectl exec -n auid deploy/backend -c backend -- `
+  curl -s -X POST http://localhost:8080/api/step/03-auid-token
 ```
 
 Expected: `"ok": true`, an `authorization_header_preview` like `Bearer eyJ...`, and the request showing `AgentIdentity=<AGENT_IDENTITY_APP_ID>` + `AgentUsername=<AGENT_USER_UPN>`.
@@ -174,7 +175,7 @@ Expected: `"ok": true`, an `authorization_header_preview` like `Bearer eyJ...`, 
 |--|--|--|
 | Step 1.1 returns `403 Authorization_RequestDenied` | Trying to create `agentUser` with a delegated admin token | Blueprint SP must hold the **application** role `AgentIdUser.ReadWrite.IdentityParentedBy`. Grant via `POST /servicePrincipals/{bpSpId}/appRoleAssignments`. |
 | Step 1.2 fails `AADSTS650053` (`GroupMember.Read doesn't exist`) | Multi-scope browser admin-consent URL splits scopes wrong | Use [`scripts/02-grant-agentic-user-consent.ps1`](./scripts/02-grant-agentic-user-consent.ps1) instead of the browser. |
-| `deploy-aks-dev.sh` exits at start with `ERROR: $WEATHER_AGENT_APP_ID unset` | Skipped Step 1.3 | Run [`scripts/04-register-weather-app.ps1`](./scripts/04-register-weather-app.ps1), copy the printed values into `/tmp/deploy-vars.sh`, re-source. |
+| `deploy-aks-dev.ps1` exits at start with `ERROR: $WEATHER_AGENT_APP_ID unset` | Skipped Step 1.3 | Run [`scripts/04-register-weather-app.ps1`](./scripts/04-register-weather-app.ps1), copy the printed values into your `deploy-vars.ps1`, re-dot-source. |
 | Sidecar logs `AADSTS700016` / `invalid_client` | Blueprint FIC for `system:serviceaccount:auid:backend-sa` not present | Re-run [`deploy/aks/scripts/03-federate-blueprint.ps1`](./deploy/aks/scripts/03-federate-blueprint.ps1). Confirm `OIDC_ISSUER` was appended to deploy-vars and re-sourced. |
 | Sidecar logs `AADSTS65001` / `consent_required` | Agent Identity → Weather Agent admin consent missing | Re-run [`scripts/04-register-weather-app.ps1`](./scripts/04-register-weather-app.ps1), or grant via `POST /v1.0/oauth2PermissionGrants` (`clientId=<aiSpId>`, `resourceId=<weatherSpId>`, `consentType=AllPrincipals`, `scope="Weather.Read"`). |
 | `/api/step/03-auid-token` returns connection-refused | Sidecar container not running, or `SIDECAR_URL` env wrong | `kubectl describe pod` and check the `sidecar` container is Ready. Manifest expects `SIDECAR_URL=http://localhost:5000`. |
@@ -193,12 +194,12 @@ Expected: `"ok": true`, an `authorization_header_preview` like `Bearer eyJ...`, 
 - [`scripts/04-register-weather-app.ps1`](./scripts/04-register-weather-app.ps1) — registers the Weather Agent app, exposes `Weather.Read`, grants admin consent (Agent Identity → Weather Agent).
 
 ### Phase 2 — AKS deploy ([`deploy/aks/`](./deploy/aks/))
-- [`deploy/aks/scripts/deploy-vars.sh.template`](./deploy/aks/scripts/deploy-vars.sh.template) — variables file you copy to `/tmp/deploy-vars.sh`.
-- [`deploy/aks/scripts/01-create-aks.sh`](./deploy/aks/scripts/01-create-aks.sh) — RG + ACR + AKS (OIDC + WI on, attach-acr).
-- [`deploy/aks/scripts/02-build-and-push.sh`](./deploy/aks/scripts/02-build-and-push.sh) — `az acr build` for the three images.
+- [`deploy/aks/scripts/deploy-vars.ps1.template`](./deploy/aks/scripts/deploy-vars.ps1.template) — variables file you copy and dot-source.
+- [`deploy/aks/scripts/01-create-aks.ps1`](./deploy/aks/scripts/01-create-aks.ps1) — RG + ACR + AKS (OIDC + WI on, attach-acr).
+- [`deploy/aks/scripts/02-build-and-push.ps1`](./deploy/aks/scripts/02-build-and-push.ps1) — `az acr build` for the three images.
 - [`deploy/aks/scripts/03-federate-blueprint.ps1`](./deploy/aks/scripts/03-federate-blueprint.ps1) — adds the FIC on the Blueprint app.
-- [`deploy/aks/scripts/04-apply-manifests.sh`](./deploy/aks/scripts/04-apply-manifests.sh) — `envsubst` + `kubectl apply` for everything in `manifests/`.
-- [`deploy/aks/scripts/deploy-aks-dev.sh`](./deploy/aks/scripts/deploy-aks-dev.sh) — one-shot orchestrator.
+- [`deploy/aks/scripts/04-apply-manifests.ps1`](./deploy/aks/scripts/04-apply-manifests.ps1) — PowerShell string substitution + `kubectl apply` for everything in `manifests/`.
+- [`deploy/aks/scripts/deploy-aks-dev.ps1`](./deploy/aks/scripts/deploy-aks-dev.ps1) — one-shot orchestrator.
 - [`deploy/aks/manifests/`](./deploy/aks/manifests/) — `00-namespace`, `10-serviceaccount`, `20-weather-agent`, `30-ui` (LB), `40-backend` (broker + auth-sidecar containers).
 
 ### Application code (built into the three container images)
@@ -218,9 +219,15 @@ Expected: `"ok": true`, an `authorization_header_preview` like `Bearer eyJ...`, 
 - [ ] Agent Identity has a FIC trusting the Blueprint app.
 - [ ] Agentic User provisioned and Agent Identity → Graph `User.Read` AllPrincipals grant exists.
 - [ ] Weather Agent app registered, scope exposed, Agent Identity → Weather Agent admin-consent grant exists.
-- [ ] `deploy-aks-dev.sh` completed without error and `kubectl get pods -n auid` shows `backend` (2/2 — backend + sidecar), `weather-agent`, `ui` all `Running`.
+- [ ] `deploy-aks-dev.ps1` completed without error and `kubectl get pods -n auid` shows `backend` (2/2 — backend + sidecar), `weather-agent`, `ui` all `Running`.
 - [ ] `kubectl logs -n auid -l app=backend -c sidecar` shows `Acquired token for downstream API 'weather'`.
 - [ ] LB UI at `http://<lb-ip>/` shows green PASS rows for steps 1–4 and a real weather response with the validated AUID claims.
 - [ ] Customer understands the **OBO vs AUID** distinction.
 - [ ] Customer understands that **local-only execution is not supported** and why (Workload Identity prerequisite).
 - [ ] Customer has a copy of [`PERMISSIONS.md`](./PERMISSIONS.md) for ongoing reference.
+
+---
+
+## Paired skills
+
+- **Teardown:** [`teardown-agent-aks-auid`](../teardown-agent-aks-auid/SKILL.md) — reverses this skill. DRY-RUN by default. Removes k8s namespace, RG, FIC, Weather Agent app, Agentic User, and (opt-in) Entra apps.

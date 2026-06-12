@@ -1,0 +1,50 @@
+# Copy to your working directory, fill in values, then dot-source:
+#   . .\deploy-vars.ps1
+# Or set $env:VARS_FILE to the path and let deploy-aks-dev.ps1 dot-source it.
+
+# === Entra tenant — Blueprint, Agent Identity, Weather Agent app live here ===
+$env:TENANT_ID = ""
+
+# === Azure subscription tenant (defaults to TENANT_ID for single-tenant) ===
+if (-not $env:SUBSCRIPTION_TENANT_ID) { $env:SUBSCRIPTION_TENANT_ID = $env:TENANT_ID }
+
+# === Azure subscription / location / RG ===
+$env:SUBSCRIPTION_ID = ""
+$env:RG              = "rg-auid-aks-dev"
+$env:LOCATION        = "eastus2"
+
+# === AKS + ACR ===
+$env:AKS_NAME = "aks-auid-dev"
+# ACR name: 5-50 chars, lowercase alphanumeric, GLOBALLY unique. Compute ONCE:
+#   $env:ACR_NAME = "acrauid" + (Get-Random -Minimum 1000 -Maximum 9999)
+# Then paste the fixed value here; do not re-evaluate on every dot-source.
+$env:ACR_NAME      = ""
+$env:ACR_SKU       = "Basic"
+$env:NODE_VM_SIZE  = "Standard_D2s_v5"
+$env:NODE_COUNT    = "2"
+
+# === Entra Agent ID objects (from Phase 1: entra-agent-id-setup) ===
+$env:BLUEPRINT_APP_ID       = ""
+$env:AGENT_IDENTITY_APP_ID  = ""
+
+# === Agentic User (provisioned via scripts/01-provision-agentic-user.ps1) ===
+$env:AGENT_USER_UPN       = ""
+$env:AGENT_USER_OBJECT_ID = ""
+
+# === Weather Agent app (created by scripts/04-register-weather-app.ps1) ===
+# This MUST be a separate Entra app registration with an exposed scope so the
+# AUID token can be minted for ITS audience (enabling proper signature
+# verification end-to-end — Graph tokens cannot be verified by 3rd parties).
+$env:WEATHER_AGENT_APP_ID     = ""
+if (-not $env:WEATHER_AGENT_APP_ID_URI -and $env:WEATHER_AGENT_APP_ID) {
+    $env:WEATHER_AGENT_APP_ID_URI = "api://$env:WEATHER_AGENT_APP_ID"
+} else {
+    $env:WEATHER_AGENT_APP_ID_URI = "api://weather-agent"
+}
+
+# === FIC naming (rename when redeploying onto a recycled cluster) ===
+if (-not $env:FIC_NAME) { $env:FIC_NAME = "aks-backend-sa" }
+
+# === Auto-filled by scripts — do not edit ===
+$env:OIDC_ISSUER = ""              # filled by 01-create-aks.ps1
+$env:LB_IP       = ""              # filled by 04-apply-manifests.ps1
