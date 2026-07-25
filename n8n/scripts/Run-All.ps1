@@ -53,7 +53,7 @@ param(
     [string]$OwnerEmail = 'admin@contoso.com',
 
     [Parameter(Mandatory = $false)]
-    [string]$OwnerPassword = 'N8nAdm1n!Test',
+    [string]$OwnerPassword = '<OWNER_PASSWORD>',
 
     [Parameter(Mandatory = $false)]
     [switch]$SkipMcpServer,
