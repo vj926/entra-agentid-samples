@@ -18,7 +18,7 @@
     n8n owner email (default: admin@contoso.com).
 
 .PARAMETER OwnerPassword
-    n8n owner password (default: N8nAdm1n!Test).
+    n8n owner password. Provide a strong value at runtime.
 
 .PARAMETER SkipMcpServer
     Pass through to Setup-EntraAgentId.ps1 — skips MCP Server provisioning.
